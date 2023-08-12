@@ -25,3 +25,5 @@ for item in data['items']:
     print(f"Repository: {item['name']}")
     print(f"Stars: {item['stargazers_count']}")
     print(f"Description: {item['description']}\n")
+aa = "aaaa"*   100
+print(aa)
