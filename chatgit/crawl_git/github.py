@@ -1,10 +1,3 @@
-import urllib.request
-import json
-import os
-import time
-from urllib.parse import urlencode
-
-import requests
 from chatgit.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
 
 
@@ -16,7 +9,9 @@ class CrawlGithub(CrawlGitBase):
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(total_page):
-            query_param_str = f"per_page={page_size}&stars>={self.stars_gte}&sort=stars&page={page}"
+            query_param_str = (
+                f"per_page={page_size}&stars>={self.stars_gte}&sort=stars&page={page}"
+            )
             url = self.base_url + "?" + query_param_str
             repo_resp = self.request(HttpMethod.GET, url)
             if repo_resp.status_code == 200:
@@ -53,6 +48,7 @@ class CrawlGithub(CrawlGitBase):
             return data_json["total_count"]
         else:
             raise Exception("Get total_repo faild.")
+
 
 #
 # n = 5  # number of fetched READMEs
