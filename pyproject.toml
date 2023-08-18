@@ -9,13 +9,8 @@ packages = [{include = "chatgit"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.31.0"
-
-
-#[[tool.poetry.source]]
-#name = "tsinghua"
-#url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-#priority = "primary"
-playwright = "^1.37.0"
+tenacity = "^8.2.3"
+loguru = "^0.7.0"
 
 
 [[tool.poetry.source]]
