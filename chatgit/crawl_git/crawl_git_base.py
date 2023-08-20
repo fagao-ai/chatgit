@@ -6,6 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from enum import Enum
 
 
+
 class HttpMethod(Enum):
     GET = "GET"
     POST = "POST"
@@ -21,9 +22,9 @@ class CrawlGitBase(ABC):
 
     @abstractmethod
     def gat_data(self, *args, **kwargs):
-        pass
+        ...
 
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-    def request(self, method: HttpMethod, url: str, data: dict, json: dict):
+    def request(self, method: HttpMethod, url: str, data: dict=None, json: dict=None):
         resp = request(method.value, url, data=data, json=json)
         return resp
