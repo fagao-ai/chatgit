@@ -3,8 +3,9 @@ from enum import Enum
 
 from ratelimit import limits, sleep_and_retry
 
-from chatgit.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
 from chatgit.common.logger import logger
+from chatgit.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
+
 
 class CrawlFailStage(str, Enum):
     GET_REPOS = "get_repos"
@@ -16,7 +17,6 @@ class CrawlGithub(CrawlGitBase):
     def __init__(self):
         super().__init__("https://api.github.com/search/repositories")
 
-
     @sleep_and_retry
     @limits(calls=10, period=60)
     def request_github(self, url: str):
@@ -24,21 +24,29 @@ class CrawlGithub(CrawlGitBase):
 
     @sleep_and_retry
     @limits(calls=10, period=60)
-    def request_content(self, url: str, proxies: dict={}):
+    def request_content(self, url: str, proxies: dict = None):
         return self.request(url, proxies=proxies)
-
 
     def gat_data(self, page_size=100):
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
-        for page in range(1, total_page+1):
+        for page in range(1, total_page + 1):
             query_param_str = (
                 f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             )
             url = self.base_url + "?q=" + query_param_str
             repo_resp = self.request_github(url)
             if repo_resp.status_code != 200:
-                logger.failure(json.dumps({"url": url, "failure_stage": CrawlFailStage.GET_REPOS.value, "meta_info": {}, "failure_body": repo_resp.json()}))
+                logger.failure(
+                    json.dumps(
+                        {
+                            "url": url,
+                            "failure_stage": CrawlFailStage.GET_REPOS.value,
+                            "meta_info": {},
+                            "failure_body": repo_resp.json(),
+                        }
+                    )
+                )
                 continue
             repos = repo_resp.json()["items"]
             for repo_json in repos:
@@ -64,17 +72,38 @@ class CrawlGithub(CrawlGitBase):
                     "license": license,
                     "topics": topics,
                 }
-                contents_url  = api_url + "/contents"
+                contents_url = api_url + "/contents"
                 contents_resp = self.request_github(contents_url)
                 if contents_resp.status_code != 200:
-                    logger.failure(json.dumps({"url": contents_url, "failure_stage": CrawlFailStage.GET_CONTENTS.value, "meta_info": repo_info, "failure_body": contents_resp.json()}))
+                    logger.failure(
+                        json.dumps(
+                            {
+                                "url": contents_url,
+                                "failure_stage": CrawlFailStage.GET_CONTENTS.value,
+                                "meta_info": repo_info,
+                                "failure_body": contents_resp.json(),
+                            }
+                        )
+                    )
                     continue
                 contents_json = contents_resp.json()
-                readme_url = [file['download_url'] for file in contents_json if file['name'].lower() == 'readme.md'][0]
+                readme_url = [
+                    file["download_url"]
+                    for file in contents_json
+                    if file["name"].lower() == "readme.md"
+                ][0]
                 # readme_url = [file['html_url'] for file in contents_json if file['name'].lower() == 'readme.md'][0]
                 resp = self.request_content(readme_url)
                 if resp.status_code != 200:
-                    logger.failure(json.dumps({"url": readme_url, "failure_stage": CrawlFailStage.GET_README.value, "meta_info": repo_info}))
+                    logger.failure(
+                        json.dumps(
+                            {
+                                "url": readme_url,
+                                "failure_stage": CrawlFailStage.GET_README.value,
+                                "meta_info": repo_info,
+                            }
+                        )
+                    )
                     continue
                 readme_content = resp.text
                 repo_info["readme_content"] = readme_content
@@ -91,7 +120,6 @@ class CrawlGithub(CrawlGitBase):
             raise Exception("Get total_repo faild.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     crawl_github = CrawlGithub()
     crawl_github.gat_data(page_size=10)
-
