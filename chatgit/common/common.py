@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from chatgit.common.base_setting import MyBaseSettings
 
 PROJECT_PATH = Path(__file__).absolute().parent.parent.parent
@@ -11,14 +13,14 @@ if not CRAWL_DATA.exists():
     CRAWL_DATA.mkdir()
 
 
-class Database(MyBaseSettings):
+class Database(BaseModel):
     host: str
     port: int
     username: str
     password: str
 
 
-class QdrantConnection(MyBaseSettings):
+class QdrantConnection(BaseModel):
     url: str = None
     host: str = None
     port: int = None
@@ -26,7 +28,7 @@ class QdrantConnection(MyBaseSettings):
 
 
 class Config(MyBaseSettings):
-    database: Database = Database()
+    database: Database
     qdrant: QdrantConnection = QdrantConnection()
 
     class Config:
@@ -41,3 +43,7 @@ elif os.environ.get("ENV") == "prod":
     Config.Config.env_file = CONFIG_DIR / "config.prod.toml"
 
 config = Config()
+
+
+if __name__ == "__main__":
+    print(config)
