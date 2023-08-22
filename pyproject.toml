@@ -13,6 +13,9 @@ tenacity = "^8.2.3"
 loguru = "^0.7.0"
 jsonlines = "^3.1.0"
 ratelimit = "^2.2.1"
+pydantic = "^2.2.1"
+toml = "^0.10.2"
+pydantic-settings = "^2.0.3"
 
 
 [[tool.poetry.source]]
@@ -21,12 +24,17 @@ url = "https://mirrors.aliyun.com/pypi/simple"
 priority = "primary"
 
 
+
+[tool.poetry.group.dev.dependencies]
+black = {extras = ["d"], version = "^23.7.0"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
 [tool.ruff]
+line-length = 160
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -40,3 +48,20 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
+
+
+[tool.black]
+line-length = 160
+target-version = ['py39', 'py310', 'py311']
+#include = '\.pyi?$'
+#extend-exclude = '''
+#/(
+#  # The following are specific to Black, you probably don't want those.
+#  tests/data
+#  | profiling
+#)/
+#'''
+# We use preview style for formatting Black itself. If you
+# want stable formatting across releases, you should keep
+# this off.
+preview = true

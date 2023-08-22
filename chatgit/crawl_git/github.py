@@ -25,15 +25,13 @@ class CrawlGithub(CrawlGitBase):
     @sleep_and_retry
     @limits(calls=10, period=60)
     def request_content(self, url: str, proxies: dict = None):
-        return self.request(url, proxies=proxies)
+        return self.request(HttpMethod.GET, url, proxies=proxies)
 
     def gat_data(self, page_size=100):
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(1, total_page + 1):
-            query_param_str = (
-                f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
-            )
+            query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.base_url + "?q=" + query_param_str
             repo_resp = self.request_github(url)
             if repo_resp.status_code != 200:
@@ -87,11 +85,21 @@ class CrawlGithub(CrawlGitBase):
                     )
                     continue
                 contents_json = contents_resp.json()
-                readme_url = [
-                    file["download_url"]
-                    for file in contents_json
-                    if file["name"].lower() == "readme.md"
-                ][0]
+                readme_urls = [file["download_url"] for file in contents_json if file["name"].lower() == "readme.md"]
+                if readme_urls:
+                    readme_url = readme_urls[0]
+                else:
+                    logger.failure(
+                        json.dumps(
+                            {
+                                "url": contents_url,
+                                "failure_stage": CrawlFailStage.GET_CONTENTS.value,
+                                "meta_info": repo_info,
+                                "failure_body": contents_resp.json(),
+                            }
+                        )
+                    )
+                    continue
                 # readme_url = [file['html_url'] for file in contents_json if file['name'].lower() == 'readme.md'][0]
                 resp = self.request_content(readme_url)
                 if resp.status_code != 200:
@@ -117,9 +125,9 @@ class CrawlGithub(CrawlGitBase):
             data_json = resp.json()
             return data_json["total_count"]
         else:
-            raise Exception("Get total_repo faild.")
+            raise Exception("Get total_repo failed.")
 
 
 if __name__ == "__main__":
     crawl_github = CrawlGithub()
-    crawl_github.gat_data(page_size=10)
+    crawl_github.gat_data(page_size=100)

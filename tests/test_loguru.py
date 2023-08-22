@@ -1,6 +1,3 @@
-import json
-import traceback
-
 from loguru import logger
 
 
@@ -10,5 +7,5 @@ def my_sink(message):
     # update_db(message, time=record["time"], level=record["level"])
 
 
-logger.add("file.log", format='{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}', serialize=lambda x: x['message'])
-logger.debug('调试消息')
+logger.add("file.log", format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}", serialize=lambda x: x["message"])
+logger.debug("调试消息")
