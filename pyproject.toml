@@ -16,6 +16,8 @@ ratelimit = "^2.2.1"
 pydantic = "^2.2.1"
 toml = "^0.10.2"
 pydantic-settings = "^2.0.3"
+fastapi = "^0.101.1"
+uvicorn = "^0.23.2"
 
 
 [[tool.poetry.source]]
