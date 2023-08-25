@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from chatgit.common.base_setting import MyBaseSettings
+from chatgit.common import MyBaseSettings
 
 PROJECT_PATH = Path(__file__).absolute().parent.parent.parent
 
