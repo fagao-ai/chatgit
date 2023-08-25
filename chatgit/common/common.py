@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic.main import BaseModel
 
 from chatgit.common import MyBaseSettings
 
@@ -21,10 +21,10 @@ class Database(BaseModel):
 
 
 class QdrantConnection(BaseModel):
-    url: str = None
-    host: str = None
-    port: int = None
-    memory: bool = False
+    url: str | None = None
+    host: str | None = None
+    port: int | None = None
+    memory: bool | None = False
 
 
 class Config(MyBaseSettings):

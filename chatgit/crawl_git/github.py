@@ -1,7 +1,8 @@
 import json
 from enum import Enum
 
-from ratelimit import limits, sleep_and_retry
+from ratelimit import limits, sleep_and_retry  # types: ignore
+from requests import Response
 
 from chatgit.common.logger import logger
 from chatgit.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
@@ -14,20 +15,20 @@ class CrawlFailStage(str, Enum):
 
 
 class CrawlGithub(CrawlGitBase):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("https://api.github.com/search/repositories")
 
     @sleep_and_retry
     @limits(calls=10, period=60)
-    def request_github(self, url: str):
+    def request_github(self, url: str) -> Response:
         return self.request(HttpMethod.GET, url)
 
     @sleep_and_retry
     @limits(calls=10, period=60)
-    def request_content(self, url: str, proxies: dict = None):
+    def request_content(self, url: str, proxies: dict | None = None) -> Response:
         return self.request(HttpMethod.GET, url, proxies=proxies)
 
-    def gat_data(self, page_size=100):
+    def gat_data(self, page_size: int = 100) -> None:
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(1, total_page + 1):
@@ -118,7 +119,7 @@ class CrawlGithub(CrawlGitBase):
                 logger.success(json.dumps(repo_info))
             # print(readme_content)
 
-    def get_total_repo(self):
+    def get_total_repo(self) -> int:
         url = self.base_url + "?q=" + f"stars:>={self.stars_gte}"
         resp = self.request_github(url)
         if resp.status_code == 200:

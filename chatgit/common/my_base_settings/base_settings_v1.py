@@ -5,7 +5,7 @@ import warnings
 from pathlib import Path
 from typing import AbstractSet, Any, ClassVar, Dict, List, Optional, Tuple, Type, Union
 
-from pydantic import BaseConfig, BaseSettings, Extra
+from pydantic import BaseConfig, BaseSettings, Extra  # type: ignore
 from pydantic.env_settings import (
     DotenvType,
     EnvSettingsSource,
@@ -18,14 +18,12 @@ from pydantic.fields import ModelField
 from pydantic.typing import StrPath, display_as_type
 from pydantic.utils import deep_update, sequence_like
 
-TomlEnvType = DotenvType
-
 
 class MyBaseSettings(BaseSettings):
     def _build_values(
         self,
         init_kwargs: Dict[str, Any],
-        _env_file: Optional[TomlEnvType] = None,
+        _env_file: Optional[DotenvType] = None,
         _env_file_encoding: Optional[str] = None,
         _env_nested_delimiter: Optional[str] = None,
         _secrets_dir: Optional[StrPath] = None,
@@ -108,7 +106,7 @@ class MyBaseSettings(BaseSettings):
     __config__: ClassVar[Type[Config]]
 
 
-def read_env_file(file_path: StrPath, *, encoding: str = None, case_sensitive: bool = False) -> Dict[str, Optional[str]]:
+def read_env_file(file_path: StrPath, *, encoding: str | None = None, case_sensitive: bool = False) -> Dict[str, Optional[str]]:
     file_pure_path = Path(file_path)
     file_path_suffix = file_pure_path.suffix
     if file_path_suffix == ".toml":
@@ -123,7 +121,7 @@ def read_env_file(file_path: StrPath, *, encoding: str = None, case_sensitive: b
         except ImportError as e:
             raise ImportError("python-dotenv is not installed, run `pip install pydantic[dotenv]`") from e
 
-        file_vars: Dict[str, Optional[str]] = dotenv_values(file_path, encoding=encoding or "utf8")
+        file_vars: Dict[str, Optional[str]] = dotenv_values(file_path, encoding=encoding or "utf8")  # type: ignore
     if not case_sensitive:
         return {k.lower(): v for k, v in file_vars.items()}
     else:

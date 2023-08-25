@@ -3,15 +3,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Dict, Mapping
 
 import toml
-from pydantic._internal._utils import deep_update
+from pydantic._internal._utils import deep_update  # type: ignore
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, EnvSettingsSource, InitSettingsSource, PydanticBaseSettingsSource
 from pydantic_settings.sources import ENV_FILE_SENTINEL, DotEnvSettingsSource, DotenvType, SecretsSettingsSource
-
-TomlEnvType = DotenvType
 
 
 class MyBaseSettings(BaseSettings):
@@ -44,7 +42,7 @@ class MyBaseSettings(BaseSettings):
         init_kwargs: dict[str, Any],
         _case_sensitive: bool | None = None,
         _env_prefix: str | None = None,
-        _env_file: TomlEnvType | None = None,
+        _env_file: DotenvType | None = None,
         _env_file_encoding: str | None = None,
         _env_nested_delimiter: str | None = None,
         _secrets_dir: str | Path | None = None,
@@ -114,7 +112,7 @@ class TomlSettingsSource(EnvSettingsSource):
     def __init__(
         self,
         settings_cls: type[BaseSettings],
-        toml_file: TomlEnvType | None = ENV_FILE_SENTINEL,
+        toml_file: DotenvType | None = ENV_FILE_SENTINEL,
         toml_file_encoding: str | None = None,
         case_sensitive: bool | None = None,
         env_prefix: str | None = None,
@@ -143,7 +141,7 @@ class TomlSettingsSource(EnvSettingsSource):
 
         return toml_env_vars
 
-    def _read_toml_env_file(self, env_path: Path, case_sensitive):
+    def _read_toml_env_file(self, env_path: Path, case_sensitive: bool) -> Dict[str, str | None]:
         file_vars: dict[str, str | None] = toml.loads(env_path.read_text(encoding=self.env_file_encoding or "utf8"))
         if not case_sensitive:
             return {k.lower(): v for k, v in file_vars.items()}

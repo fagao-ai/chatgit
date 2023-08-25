@@ -35,6 +35,9 @@ priority = "primary"
 black = {extras = ["d"], version = "^23.7.0"}
 mypy = "^1.5.1"
 types-toml = "^0.10.8.7"
+mypy-extensions = "^1.0.0"
+types-requests = "2.31.0.2"
+types-urllib3 = "1.26.25.14"
 
 [build-system]
 requires = ["poetry-core"]
