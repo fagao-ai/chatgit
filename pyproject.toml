@@ -19,6 +19,7 @@ uvicorn = "^0.23.2"
 pydantic = "1.10.8"
 ormar = "^0.12.2"
 tomli = "^2.0.1"
+httpx = "^0.24.1"
 
 
 [[tool.poetry.source]]
@@ -75,4 +76,4 @@ target-version = ['py39', 'py310', 'py311']
 # We use preview style for formatting Black itself. If you
 # want stable formatting across releases, you should keep
 # this off.
-preview = true
+preview = false

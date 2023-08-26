@@ -8,8 +8,8 @@ from typing import Any, Dict, Mapping
 import toml
 from pydantic._internal._utils import deep_update  # type: ignore
 from pydantic.fields import FieldInfo
-from pydantic_settings import BaseSettings, EnvSettingsSource, InitSettingsSource, PydanticBaseSettingsSource
-from pydantic_settings.sources import ENV_FILE_SENTINEL, DotEnvSettingsSource, DotenvType, SecretsSettingsSource
+from pydantic_settings import BaseSettings, EnvSettingsSource, InitSettingsSource, PydanticBaseSettingsSource  # type: ignore
+from pydantic_settings.sources import ENV_FILE_SENTINEL, DotEnvSettingsSource, DotenvType, SecretsSettingsSource  # type: ignore
 
 
 class MyBaseSettings(BaseSettings):
