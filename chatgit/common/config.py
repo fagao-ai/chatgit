@@ -21,8 +21,13 @@ class QdrantConnection(BaseModel):
     memory: bool | None = False
 
 
+class Proxy(BaseModel):
+    github_api_proxy_pool: str
+
+
 class Config(MyBaseSettings):
     database: Database
+    proxy: Proxy
     qdrant: QdrantConnection = QdrantConnection()
 
     class Config:
@@ -31,7 +36,7 @@ class Config(MyBaseSettings):
 
 CONFIG_DIR = PROJECT_PATH / "chatgit/config"
 
-ENV = os.getenv("ENV", "dev")
+ENV = os.getenv("ENV", "prod")
 
 if ENV == "dev":
     Config.Config.env_file = CONFIG_DIR / "config.dev.toml"

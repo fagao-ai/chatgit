@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 # revision identifiers, used by Alembic.
 revision: str = "8628528dcd58"
@@ -31,7 +32,7 @@ def upgrade() -> None:
         sa.Column("topics", sa.JSON, nullable=True),
         sa.Column("forks_count", sa.Integer),
         sa.Column("license", sa.JSON),
-        sa.Column("readme_content", sa.LargeBinary, nullable=True),
+        sa.Column("readme_content", LONGTEXT, nullable=True),
         sa.Column("repo_source", sa.String(10)),
         sa.Column("created_at", sa.DateTime),
         sa.Column("updated_at", sa.DateTime),

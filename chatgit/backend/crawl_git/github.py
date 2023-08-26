@@ -7,6 +7,7 @@ from requests import Response
 from tqdm import tqdm
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
+from chatgit.common import config
 from chatgit.common.logger import logger  # types: ignore
 from chatgit.models.repositories import Repositories
 
@@ -56,7 +57,7 @@ class SyncCrawlGithub(CrawlGithubBase):
                 )
                 continue
             repos = repo_resp.json()["items"]
-            for repo_json in repos:
+            for repo_json in tqdm(repos, desc="repos", total=len(repos)):
                 id = repo_json["id"]
                 name = repo_json["name"]
                 index_url = repo_json["html_url"]
@@ -146,14 +147,24 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.proxies = {proxy_schema + "://": proxy_value for proxy_schema, proxy_value in proxies.items()}
 
     @sleep_and_retry
-    @limits(calls=10, period=60)
+    # @limits(calls=10, period=60)
     async def request_github(self, url: str) -> Response:
-        return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
+        proxy_dict = self.get_proxy()
+        return await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
 
     @sleep_and_retry
     @limits(calls=10, period=60)
     async def request_content(self, url: str) -> Response:
         return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
+
+    @staticmethod
+    def get_proxy() -> Dict[str, str]:
+        import requests
+
+        proxy_json = requests.get(config.proxy.github_api_proxy_pool)
+        proxy = proxy_json.json()["proxy"]
+        print("proxy_json: ", proxy)
+        return {"http": proxy}
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, Repositories]:  # type: ignore
         total_count = await self.get_total_repo()
@@ -175,7 +186,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 )
                 continue
             repos = repo_resp.json()["items"]
-            for repo_json in repos:
+            for repo_json in tqdm(repos, desc="repos", total=len(repos)):
                 id = repo_json["id"]
                 name = repo_json["name"]
                 index_url = repo_json["html_url"]
@@ -216,6 +227,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 readme_urls = [file["download_url"] for file in contents_json if file["name"].lower() == "readme.md"]
                 if readme_urls:
                     readme_url = readme_urls[0]
+                    # print(readme_url)
                 else:
                     logger.failure(
                         json.dumps(
