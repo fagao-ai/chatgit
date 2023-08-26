@@ -18,6 +18,7 @@ class Database(BaseModel):
     port: int
     username: str
     password: str
+    db_name: str
 
 
 class QdrantConnection(BaseModel):

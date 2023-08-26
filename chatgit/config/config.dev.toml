@@ -3,6 +3,7 @@ host = "localhost"
 port = 5432
 username = "myuser"
 password = "mypassword"
+db_name = "chatgit"
 
 [qdrant]
 host = "localhost"

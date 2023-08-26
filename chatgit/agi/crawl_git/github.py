@@ -152,7 +152,7 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def request_content(self, url: str) -> Response:
         return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
 
-    async def get_data(self, page_size: int = 100) -> None:
+    async def get_data(self, page_size: int = 100) -> None:  # type: ignore
         total_count = await self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(1, total_page + 1):

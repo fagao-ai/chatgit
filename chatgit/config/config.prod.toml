@@ -1,8 +1,9 @@
 [database]
-host = "localhost"
-port = 5432
-username = "myuser"
-password = "mypassword"
+host = "www.batariya.top"
+port = 33063
+username = "chatgit"
+password = "dFnMwfmT8PkXZzrf"
+db_name = "chatgit"
 
 [qdrant]
 host = "localhost"
