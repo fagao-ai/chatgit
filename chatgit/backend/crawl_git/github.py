@@ -4,6 +4,7 @@ from typing import Any, AsyncGenerator, Dict, Generator
 
 from ratelimit import limits, sleep_and_retry  # types: ignore
 from requests import Response
+from tqdm import tqdm
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
 from chatgit.common.logger import logger  # types: ignore
@@ -38,7 +39,7 @@ class SyncCrawlGithub(CrawlGithubBase):
     def get_data(self, page_size: int = 100) -> Generator[int, None, Repositories]:  # type: ignore
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
-        for page in range(1, total_page + 1):
+        for page in tqdm(range(1, total_page + 1), desc="process", total=total_page):
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.base_url + "?q=" + query_param_str
             repo_resp = self.request_github(url)
@@ -157,7 +158,7 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, Repositories]:  # type: ignore
         total_count = await self.get_total_repo()
         total_page = int(total_count / page_size) + 1
-        for page in range(1, total_page + 1):
+        for page in tqdm(range(1, total_page + 1), desc="process", total=total_page):
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.base_url + "?q=" + query_param_str
             repo_resp = await self.request_github(url)
