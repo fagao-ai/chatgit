@@ -1,12 +1,13 @@
 import json
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, AsyncGenerator, Dict, Generator
 
 from ratelimit import limits, sleep_and_retry  # types: ignore
 from requests import Response
 
-from chatgit.agi.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
-from chatgit.common.logger import logger
+from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
+from chatgit.common.logger import logger  # types: ignore
+from chatgit.models.repositories import Repositories
 
 
 class CrawlFailStage(str, Enum):
@@ -34,7 +35,7 @@ class SyncCrawlGithub(CrawlGithubBase):
     def request_content(self, url: str) -> Response:
         return self.sync_request(HttpMethod.GET, url, proxies=self.proxies)
 
-    def get_data(self, page_size: int = 100) -> None:
+    def get_data(self, page_size: int = 100) -> Generator[int, None, Repositories]:  # type: ignore
         total_count = self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(1, total_page + 1):
@@ -66,7 +67,7 @@ class SyncCrawlGithub(CrawlGithubBase):
                 license = repo_json["license"]  # json
                 topics = repo_json["topics"]  # list
                 repo_info = {
-                    "id": id,
+                    "repo_id": id,
                     "name": name,
                     "index_url": index_url,
                     "api_url": api_url,
@@ -122,7 +123,8 @@ class SyncCrawlGithub(CrawlGithubBase):
                     continue
                 readme_content = resp.text
                 repo_info["readme_content"] = readme_content
-                logger.success(json.dumps(repo_info))
+                # logger.success(json.dumps(repo_info))
+                yield Repositories(**repo_info)
             # print(readme_content)
 
     def get_total_repo(self) -> int:
@@ -152,7 +154,7 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def request_content(self, url: str) -> Response:
         return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
 
-    async def get_data(self, page_size: int = 100) -> None:  # type: ignore
+    async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, Repositories]:  # type: ignore
         total_count = await self.get_total_repo()
         total_page = int(total_count / page_size) + 1
         for page in range(1, total_page + 1):
@@ -184,7 +186,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 license = repo_json["license"]  # json
                 topics = repo_json["topics"]  # list
                 repo_info = {
-                    "id": id,
+                    "repo_id": id,
                     "name": name,
                     "index_url": index_url,
                     "api_url": api_url,
@@ -240,8 +242,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                     continue
                 readme_content = resp.text
                 repo_info["readme_content"] = readme_content
-                logger.success(json.dumps(repo_info))
-            # print(readme_content)
+                yield Repositories(**repo_info)
+                # logger.success(json.dumps(repo_info))
 
     async def get_total_repo(self) -> int:
         url = self.base_url + "?q=" + f"stars:>={self.stars_gte}"
@@ -261,6 +263,9 @@ if __name__ == "__main__":
 
     async def run_async_crawl() -> None:
         crawl_github = AsyncCrawlGithub(proxies=proxies)
-        await crawl_github.get_data(page_size=100)
+        async for repo in crawl_github.get_data(page_size=100):
+            print(repo)
+
+        # await crawl_github.get_data(page_size=100)
 
     asyncio.run(run_async_crawl())

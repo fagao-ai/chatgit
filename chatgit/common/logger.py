@@ -24,4 +24,6 @@ logger.add(
 )
 
 logger.level(name="FAILURE", no=35)
-logger.failure = lambda *args, **kwargs: logger.opt(depth=1).log("FAILURE", *args, **kwargs)  # type: ignore
+logger.failure = lambda *args, **kwargs: logger.opt(depth=1).log("FAILURE", *args, **kwargs)
+
+__all__ = ["logger"]
