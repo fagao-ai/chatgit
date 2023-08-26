@@ -5,7 +5,7 @@ import warnings
 from pathlib import Path
 from typing import AbstractSet, Any, ClassVar, Dict, List, Optional, Tuple, Type, Union
 
-from pydantic import BaseConfig, BaseSettings, Extra  # type: ignore
+from pydantic import BaseConfig, BaseSettings, Extra
 from pydantic.env_settings import (
     DotenvType,
     EnvSettingsSource,
@@ -96,14 +96,14 @@ class MyBaseSettings(BaseSettings):
             return init_settings, env_settings, file_secret_settings
 
         @classmethod
-        def parse_env_var(cls, field_name: str, raw_val: Union[str, dict]) -> Any:
+        def parse_env_var(cls, field_name: str, raw_val: Union[str, Dict[str, Any]]) -> Any:
             if isinstance(raw_val, str):
                 return cls.json_loads(raw_val)
             else:
                 return raw_val
 
-    # populated by the metaclass using the Config class defined above, annotated here to help IDEs only
-    __config__: ClassVar[Type[Config]]
+    # populated by the metaclass using the Config class defined above, annotated here to help IDEs only.
+    __config__: ClassVar[Type[Config]]  # type: ignore
 
 
 def read_env_file(file_path: StrPath, *, encoding: str | None = None, case_sensitive: bool = False) -> Dict[str, Optional[str]]:

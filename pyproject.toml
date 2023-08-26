@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["hezhaozhao <hezhaozhaog@gmail.com>"]
 readme = "README.md"
-packages = [{include = "chatgit"}]
+packages = [{ include = "chatgit" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -34,12 +34,13 @@ name = "PyPI"
 priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
-black = {extras = ["d"], version = "^23.7.0"}
+black = { extras = ["d"], version = "^23.7.0" }
 mypy = "^1.5.1"
 types-toml = "^0.10.8.7"
 mypy-extensions = "^1.0.0"
 types-requests = "2.31.0.2"
 types-urllib3 = "1.26.25.14"
+pre-commit = "^3.3.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -49,17 +50,17 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 160
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "C",  # flake8-comprehensions
-    "B",  # flake8-bugbear
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    "C", # flake8-comprehensions
+    "B", # flake8-bugbear
 ]
 ignore = [
-    "E501",  # line too long, handled by black
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+    "C901", # too complex
 ]
 
 
@@ -78,3 +79,21 @@ target-version = ['py39', 'py310', 'py311']
 # want stable formatting across releases, you should keep
 # this off.
 preview = false
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+
+# for strict mypy: (this is the tricky one :-))
+disallow_untyped_defs = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
