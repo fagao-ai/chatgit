@@ -5,8 +5,8 @@ from typing import Any, Dict
 from ratelimit import limits, sleep_and_retry  # types: ignore
 from requests import Response
 
+from chatgit.agi.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
 from chatgit.common.logger import logger
-from chatgit.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
 
 
 class CrawlFailStage(str, Enum):

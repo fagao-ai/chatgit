@@ -3,7 +3,7 @@ from typing import Callable
 
 from fastapi import FastAPI, Request, Response
 
-from chatgit.views import app_router
+from chatgit.backend.views import app_router
 
 app = FastAPI(docs_url="/api/v1/docs")
 
