@@ -2,7 +2,7 @@ from loguru import logger
 
 from chatgit.common.common import CRAWL_DATA
 
-# logger.add("crawl.log", rotation="500 MB")  # 每当日志文件达到 500MB 时切割
+# logger.add("crawl.log", rotation="500 MB")  # 每当日志文件达到 500MB 时切割.
 logger.add(
     sink=CRAWL_DATA / "crawl-success.jsonlines",
     # format=lambda message: json.dumps(message),
@@ -24,4 +24,4 @@ logger.add(
 )
 
 logger.level(name="FAILURE", no=35)
-logger.failure = lambda *args, **kwargs: logger.opt(depth=1).log("FAILURE", *args, **kwargs)  # type: ignore
+logger.failure = lambda *args, **kwargs: logger.opt(depth=1).log("FAILURE", *args, **kwargs)
