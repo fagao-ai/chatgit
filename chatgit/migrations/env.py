@@ -7,6 +7,8 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from chatgit.common import config as project_config
+
 # 修改默认路径为上级路径
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -30,7 +32,9 @@ target_metadata = None
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-dburl = context.get_x_argument(as_dictionary=True).get("dburl")
+# dburl = context.get_x_argument(as_dictionary=True).get("dburl")
+db_config = project_config.database
+db_url = f"mysql+pymysql://{db_config.username}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.db_name}"
 
 
 def run_migrations_offline() -> None:
@@ -59,12 +63,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    print(dburl)
+    print(db_url)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        url=dburl,
+        url=db_url,
     )
 
     with connectable.connect() as connection:

@@ -39,3 +39,7 @@ elif ENV == "prod":
     Config.Config.env_file = CONFIG_DIR / "config.prod.toml"
 
 config = Config()
+
+db_url = (
+    f"mysql://{config.database.username}:{config.database.password}@{config.database.host}:{config.database.port}/{config.database.db_name}?charset=utf8mb4"
+)

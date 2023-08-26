@@ -18,13 +18,13 @@ class Repositories(ormar.Model, BaseModelMixins):
     name: str = ormar.String(max_length=200)
     index_url: str = ormar.String(max_length=200)
     api_url: str = ormar.String(max_length=200)
-    description: str = ormar.Text()
-    language: str = ormar.String(max_length=20)
+    description: str = ormar.Text(nullable=True)
+    language: str = ormar.String(max_length=20, nullable=True)
     has_wiki: bool = ormar.Boolean(default=True)
-    topics: List[str] = ormar.JSON()
+    topics: List[str] = ormar.JSON(nullable=True)
     forks_count: int = ormar.Integer(default=0)
-    license: Dict[str, Any] = ormar.JSON()
-    readme_content: str = ormar.Text()
+    license: Dict[str, Any] = ormar.JSON(nullable=True)
+    readme_content: str = ormar.Text(nullable=True)
     repo_source: RepoSource = ormar.Enum(enum_class=RepoSource, default=RepoSource.GITHUB)
 
 

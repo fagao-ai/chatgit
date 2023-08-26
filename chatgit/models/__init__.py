@@ -4,10 +4,9 @@ import databases
 import sqlalchemy
 from ormar import DateTime, Integer, ModelMeta
 
-from chatgit.common import config
+from chatgit.common import db_url
 
-db_config = config.database
-database = databases.Database(f"mysql://{db_config.username}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.db_name}")
+database = databases.Database(db_url)
 metadata = sqlalchemy.MetaData()
 
 
