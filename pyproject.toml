@@ -41,6 +41,7 @@ mypy-extensions = "^1.0.0"
 types-requests = "2.31.0.2"
 types-urllib3 = "1.26.25.14"
 pre-commit = "^3.3.3"
+alembic = "^1.11.3"
 
 [build-system]
 requires = ["poetry-core"]
