@@ -819,6 +819,22 @@ url = "https://mirrors.aliyun.com/pypi/simple"
 reference = "aliyun"
 
 [[package]]
+name = "invoke"
+version = "2.2.0"
+description = "Pythonic task execution"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "invoke-2.2.0-py3-none-any.whl", hash = "sha256:6ea924cc53d4f78e3d98bc436b08069a03077e6f85ad1ddaa8a116d7dad15820"},
+    {file = "invoke-2.2.0.tar.gz", hash = "sha256:ee6cbb101af1a859c7fe84f2a264c059020b0cb7fe3535f9424300ab568f6bd5"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "aliyun"
+
+[[package]]
 name = "jsonlines"
 version = "3.1.0"
 description = "Library with helpers for the jsonlines file format"
@@ -1693,6 +1709,22 @@ url = "https://mirrors.aliyun.com/pypi/simple"
 reference = "aliyun"
 
 [[package]]
+name = "types-invoke"
+version = "2.0.0.9"
+description = "Typing stubs for invoke"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-invoke-2.0.0.9.tar.gz", hash = "sha256:e65fb19dfdd9233b69c21a0f2bb9a79b51705a08157dceced9316728642c6ddb"},
+    {file = "types_invoke-2.0.0.9-py3-none-any.whl", hash = "sha256:3f2a857c1274d92543dc75655ddd85b163366fc3ece10cd1c757a3a96d26485d"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "aliyun"
+
+[[package]]
 name = "types-requests"
 version = "2.31.0.2"
 description = "Typing stubs for requests"
@@ -1944,4 +1976,4 @@ reference = "aliyun"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "49ac7bdd6456fb3ad0b471ba37ed64fdf7fb246802e4004bd16c61cde7389c6c"
+content-hash = "000220aaadf0f1cbf21ff819e112251b473d0a40c8524422b9636eb73ed6620d"
