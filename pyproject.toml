@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "chatgit" }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 requests = "^2.31.0"
 tenacity = "^8.2.3"
 loguru = "^0.7.0"
@@ -70,7 +70,7 @@ ignore = [
 
 [tool.black]
 line-length = 160
-target-version = ['py39', 'py310', 'py311']
+target-version = ['py310', 'py311']
 #include = '\.pyi?$'
 #extend-exclude = '''
 #/(
