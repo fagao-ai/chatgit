@@ -1,3 +1,4 @@
+import asyncio
 import json
 import random
 from enum import Enum
@@ -206,7 +207,6 @@ if __name__ == "__main__":
     proxies = {"https:": "http://localhost:20171"}
     # crawl_github = SyncCrawlGithub(proxies=proxies)
     # crawl_github.get_data(page_size=100)
-    import asyncio
 
     async def run_async_crawl() -> None:
         crawl_github = AsyncCrawlGithub(proxies=proxies)
