@@ -36,14 +36,30 @@ class AsyncCrawlGithub(CrawlGitBase):
 
     @sleep_and_retry
     @limits(calls=30, period=60)
-    async def request_github(self, url: str) -> Response:
+    async def request_github(self, url: str) -> Response | None:
+        flag = 0
         while True:
             proxy_dict = self.get_proxy()
-            resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
-            if resp.status_code == 403:
-                await asyncio.sleep(3)
-                continue
-            return resp
+            try:
+                resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
+                if resp.status_code == 403:
+                    await asyncio.sleep(3)
+                    continue
+                return resp
+            except Exception:
+                flag += 1
+                if flag > 10:
+                    return None
+                logger.failure(
+                    json.dumps(
+                        {
+                            "url": url,
+                            "failure_stage": CrawlFailStage.GET_REPOS.value,
+                            "meta_info": {},
+                            "failure_body": f"request {url} failed.",
+                        }
+                    )
+                )
 
     @sleep_and_retry
     async def request_content(self, url: str) -> Response:
@@ -61,6 +77,8 @@ class AsyncCrawlGithub(CrawlGitBase):
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.base_url + "?q=" + query_param_str
             repo_resp = await self.request_github(url)
+            if repo_resp is None:
+                continue
             if repo_resp.status_code != 200:
                 logger.failure(
                     json.dumps(
@@ -99,6 +117,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 contents_url = api_url + "/contents"
                 contents_resp = await self.request_github(contents_url)
+                if contents_resp is None:
+                    continue
                 if contents_resp.status_code != 200:
                     logger.failure(
                         json.dumps(
