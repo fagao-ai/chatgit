@@ -22,7 +22,7 @@ class QdrantConnection(BaseModel):
 
 
 class Proxy(BaseModel):
-    github_api_proxy_pool: str
+    local_proxy_ports: List[int]
 
 
 class Config(MyBaseSettings):

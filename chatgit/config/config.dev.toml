@@ -8,3 +8,7 @@ db_name = "chatgit"
 [qdrant]
 host = "localhost"
 port = 6333
+
+
+[proxy]
+local_proxy_ports = [30001]

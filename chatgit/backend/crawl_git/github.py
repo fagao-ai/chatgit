@@ -1,4 +1,5 @@
 import json
+import random
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Generator
 
@@ -147,24 +148,24 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.proxies = {proxy_schema + "://": proxy_value for proxy_schema, proxy_value in proxies.items()}
 
     @sleep_and_retry
-    # @limits(calls=10, period=60)
+    @limits(calls=30, period=60)
     async def request_github(self, url: str) -> Response:
-        proxy_dict = self.get_proxy()
-        return await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
+        while True:
+            proxy_dict = self.get_proxy()
+            resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
+            if resp.status_code == 403:
+                await asyncio.sleep(3)
+                continue
+            return resp
 
     @sleep_and_retry
-    @limits(calls=10, period=60)
     async def request_content(self, url: str) -> Response:
         return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
 
     @staticmethod
     def get_proxy() -> Dict[str, str]:
-        import requests
-
-        proxy_json = requests.get(config.proxy.github_api_proxy_pool)
-        proxy = proxy_json.json()["proxy"]
-        print("proxy_json: ", proxy)
-        return {"http": proxy}
+        proxy_port = random.choice(config.proxy.local_proxy_ports)
+        return {"http": f"http://localhost:{proxy_port}"}
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, Repositories]:  # type: ignore
         total_count = await self.get_total_repo()
@@ -274,11 +275,13 @@ if __name__ == "__main__":
     # crawl_github.get_data(page_size=100)
     import asyncio
 
+
     async def run_async_crawl() -> None:
         crawl_github = AsyncCrawlGithub(proxies=proxies)
         async for repo in crawl_github.get_data(page_size=100):
             print(repo)
 
         # await crawl_github.get_data(page_size=100)
+
 
     asyncio.run(run_async_crawl())
