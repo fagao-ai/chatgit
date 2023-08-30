@@ -62,7 +62,31 @@ class AsyncCrawlGithub(CrawlGitBase):
                 )
 
     @sleep_and_retry
-    async def request_content(self, url: str) -> Response:
+    async def request_content(self, url: str) -> Response | None:
+        flag = 0
+        while True:
+            proxy_dict = self.get_proxy()
+            try:
+                resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
+                if resp.status_code == 403:
+                    await asyncio.sleep(3)
+                    continue
+                return resp
+            except Exception:
+                flag += 1
+                if flag > 10:
+                    return None
+                logger.failure(
+                    json.dumps(
+                        {
+                            "url": url,
+                            "failure_stage": CrawlFailStage.GET_REPOS.value,
+                            "meta_info": {},
+                            "failure_body": f"request {url} failed.",
+                        }
+                    )
+                )
+
         return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
 
     @staticmethod
@@ -150,6 +174,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                     continue
                 # readme_url = [file['html_url'] for file in contents_json if file['name'].lower() == 'readme.md'][0]
                 resp = await self.request_content(readme_url)
+                if resp is None:
+                    continue
                 if resp.status_code != 200:
                     logger.failure(
                         json.dumps(
