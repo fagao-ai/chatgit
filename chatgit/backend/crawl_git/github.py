@@ -41,13 +41,15 @@ class AsyncCrawlGithub(CrawlGitBase):
         flag = 0
         while True:
             proxy_dict = self.get_proxy()
+            print(proxy_dict, url)
             try:
                 resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
                 if resp.status_code == 403:
                     await asyncio.sleep(3)
                     continue
                 return resp
-            except Exception:
+            except Exception as e:
+                print(e)
                 flag += 1
                 if flag > 10:
                     raise
@@ -147,7 +149,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                         )
                     )
                     continue
-                repo_info["readme_url"] = readme_url
+                meta_info = repo_info.copy()
+                meta_info["readme_url"] = readme_url
 
                 resp = await self.handle_request(readme_url, CrawlFailStage.GET_README, meta_info=repo_info)
                 if resp is None:
