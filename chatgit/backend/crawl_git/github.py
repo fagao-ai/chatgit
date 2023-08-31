@@ -46,14 +46,16 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 403:
-                    self.repo_bar.set_description(f"repos{self.repo_index} -> rate_limit")
+                    if self.repo_bar:
+                        self.repo_bar.set_description(f"repo{self.repo_index} -> rate_limit")
                     await asyncio.sleep(1)
                     continue
                 return resp
             except Exception as e:
                 flag += 1
                 if flag > 10:
-                    self.repo_bar.set_description(f"repos{self.repo_index} -> exception:{e}")
+                    if self.repo_bar:
+                        self.repo_bar.set_description(f"repo{self.repo_index} -> exception:{e}")
                     raise
 
     async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Tuple[str, str] | None:
@@ -148,7 +150,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 repo_info["readme_content"] = readme_content
                 repo_info["readme_name"] = readme_name
                 yield Repositories(**repo_info)
-                self.repo_bar.set_description(f"repos{self.repo_index} -> success")
+                self.repo_bar.set_description(f"repo{self.repo_index} -> success")
             self.page_bar.set_description(f"page{page}")
 
     async def get_total_repo(self) -> int:
