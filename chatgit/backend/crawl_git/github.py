@@ -35,38 +35,39 @@ class AsyncCrawlGithub(CrawlGitBase):
         flag = 0
         while True:
             proxy_dict = self.get_proxy()
-            print(proxy_dict, url)
             try:
                 resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
                 if resp.status_code == 403:
                     await asyncio.sleep(3)
                     continue
                 return resp
-            except Exception as e:
-                print(e)
+            except Exception:
                 flag += 1
                 if flag > 10:
                     raise
 
     async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> str | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
-        response = await self.request_github(readme_url)
-        if response.status_code == 200:
-            response_data = response.json()
-            readme_content = response_data["content"]
-            decoded_content = base64.b64decode(readme_content).decode("utf-8")
-            return decoded_content
-        logger.failure(
-            json.dumps(
-                {
-                    "url": readme_url,
-                    "failure_stage": fail_stage.value,
-                    "meta_info": meta_info,
-                    "error_msg": None,
-                }
+        try:
+            response = await self.request_github(readme_url)
+            if response.status_code == 200:
+                response_data = response.json()
+                readme_content = response_data["content"]
+                decoded_content = base64.b64decode(readme_content).decode("utf-8")
+                return decoded_content
+            raise
+        except Exception as e:
+            logger.failure(
+                json.dumps(
+                    {
+                        "url": readme_url,
+                        "failure_stage": fail_stage.value,
+                        "meta_info": meta_info,
+                        "error_msg": str(e),
+                    }
+                )
             )
-        )
-        return None
+            return None
 
     async def handle_request(self, url: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Response | None:
         try:
