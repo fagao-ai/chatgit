@@ -3,7 +3,7 @@ import base64
 import json
 import random
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, AsyncGenerator, Dict, Tuple
 
 from ratelimit import limits, sleep_and_retry  # types: ignore
 from requests import Response
@@ -50,15 +50,16 @@ class AsyncCrawlGithub(CrawlGitBase):
                 if flag > 10:
                     raise
 
-    async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> str | None:
+    async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
         try:
             response = await self.request_github(readme_url)
             if response.status_code == 200:
                 response_data = response.json()
                 readme_content = response_data["content"]
+                readme_name = response_data["name"]
                 decoded_content = base64.b64decode(readme_content).decode("utf-8")
-                return decoded_content
+                return decoded_content, readme_name
             raise
         except Exception as e:
             logger.failure(
@@ -130,10 +131,12 @@ class AsyncCrawlGithub(CrawlGitBase):
                     "license": license,
                     "topics": topics,
                 }
-                readme_content = await self.download_readme(full_name, CrawlFailStage.GET_README, repo_info)
-                if readme_content is None:
+                readme_tuple = await self.download_readme(full_name, CrawlFailStage.GET_README, repo_info)
+                if readme_tuple is None:
                     continue
+                readme_content, readme_name = readme_tuple
                 repo_info["readme_content"] = readme_content
+                repo_info["readme_name"] = readme_name
                 yield Repositories(**repo_info)
                 # logger.success(json.dumps(repo_info))
 

@@ -26,4 +26,5 @@ class Repositories(ormar.Model, BaseModelMixins):
     forks_count: int = ormar.Integer(default=0)
     license: Dict[str, Any] = ormar.JSON(nullable=True)
     readme_content: str = ormar.Text(nullable=True)
+    readme_name: str = ormar.String(max_length=200)
     repo_source: RepoSource = ormar.Enum(enum_class=RepoSource, default=RepoSource.GITHUB)
