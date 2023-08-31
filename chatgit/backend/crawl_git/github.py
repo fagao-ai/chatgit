@@ -36,7 +36,11 @@ class AsyncCrawlGithub(CrawlGitBase):
         while True:
             proxy_dict = self.get_proxy()
             try:
-                resp = await self.async_request(HttpMethod.GET, url, proxies={"http://": f"http://{proxy_dict['http']}"})
+                proxies = {
+                    "http://": proxy_dict["http"],
+                    "https://": proxy_dict["http"],
+                }
+                resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 403:
                     await asyncio.sleep(3)
                     continue

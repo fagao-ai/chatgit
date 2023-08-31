@@ -26,7 +26,7 @@ class CrawlGitBase(ABC):
     def get_data(self, *args, **kwargs) -> Union[Generator[int, None, Repositories], AsyncGenerator[None, Repositories]]:  # type: ignore
         ...
 
-    @retry(stop=stop_after_attempt(10), wait=wait_fixed(2))
+    @retry(stop=stop_after_attempt(10), wait=wait_fixed(1))
     async def async_request(
         self,
         method: HttpMethod,
