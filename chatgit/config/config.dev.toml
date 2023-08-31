@@ -11,4 +11,4 @@ port = 6333
 
 
 [proxy]
-local_proxy_ports = [30001]
+proxy= "localhost:8888"

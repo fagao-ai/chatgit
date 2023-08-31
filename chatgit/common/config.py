@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from pydantic.main import BaseModel
 
@@ -23,7 +22,7 @@ class QdrantConnection(BaseModel):
 
 
 class Proxy(BaseModel):
-    local_proxy_ports: List[int]
+    proxy: str
 
 
 class Config(MyBaseSettings):
@@ -49,3 +48,5 @@ config = Config()
 db_url = (
     f"mysql://{config.database.username}:{config.database.password}@{config.database.host}:{config.database.port}/{config.database.db_name}?charset=utf8mb4"
 )
+
+print(config.proxy.proxy)
