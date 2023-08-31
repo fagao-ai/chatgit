@@ -3,7 +3,6 @@ from typing import Any, AsyncGenerator, Dict, Generator, Union
 
 import httpx
 from requests import Response
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 from chatgit.common import StrEnum
 from chatgit.models.repositories import Repositories
@@ -26,7 +25,6 @@ class CrawlGitBase(ABC):
     def get_data(self, *args, **kwargs) -> Union[Generator[int, None, Repositories], AsyncGenerator[None, Repositories]]:  # type: ignore
         ...
 
-    @retry(stop=stop_after_attempt(10), wait=wait_fixed(1))
     async def async_request(
         self,
         method: HttpMethod,
@@ -37,6 +35,6 @@ class CrawlGitBase(ABC):
     ) -> Response:
         if proxies is None:
             proxies = {}
-        async with httpx.AsyncClient(proxies=proxies) as client:
+        async with httpx.AsyncClient(proxies=proxies, timeout=10) as client:
             resp = await client.request(str(method.value), url, data=data, json=json)
         return resp

@@ -4,8 +4,8 @@ import json
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Tuple
 
-from ratelimit import limits, sleep_and_retry  # types: ignore
 from requests import Response
+from tenacity import retry, stop_after_attempt
 from tqdm import tqdm
 from tqdm.std import Bar
 
@@ -32,8 +32,9 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.repo_bar: Bar
         self.repo_index = 0
 
-    @sleep_and_retry
-    @limits(calls=30, period=60)
+    # @sleep_and_retry
+    # @limits(calls=30, period=60)
+    @retry(stop=stop_after_attempt(3))
     async def request_github(self, url: str) -> Response:
         flag = 0
         while True:
@@ -45,14 +46,14 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 403:
-                    self.repo_bar.set_description(f"repos{self.repo_index} -> rate_limit: ")
-                    await asyncio.sleep(3)
+                    self.repo_bar.set_description(f"repos{self.repo_index} -> rate_limit")
+                    await asyncio.sleep(1)
                     continue
                 return resp
-            except Exception:
+            except Exception as e:
                 flag += 1
                 if flag > 10:
-                    self.repo_bar.set_description(f"repos{self.repo_index} -> exception: ")
+                    self.repo_bar.set_description(f"repos{self.repo_index} -> exception:{e}")
                     raise
 
     async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Tuple[str, str] | None:
@@ -67,7 +68,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 return decoded_content, readme_name
             raise
         except Exception as e:
-            self.repo_bar.set_description(f"repos{self.repo_index} -> failure: ")
+            self.repo_bar.set_description(f"repos{self.repo_index} -> failure")
             logger.failure(
                 json.dumps(
                     {
@@ -114,8 +115,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 continue
             repos = repo_resp.json()["items"]
             self.repo_bar = tqdm(repos, desc="repos0 -> start: ", total=len(repos))
-            for index, repo_json in enumerate(self.repo_bar):
-                self.repo_index = index
+            for repo_json in self.repo_bar:
+                self.repo_index += 1
                 id = repo_json["id"]
                 name = repo_json["name"]
                 full_name = repo_json["full_name"]
@@ -147,9 +148,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 repo_info["readme_content"] = readme_content
                 repo_info["readme_name"] = readme_name
                 yield Repositories(**repo_info)
-                self.repo_bar.set_description(f"repos{self.repo_index} -> success: ")
-                # logger.success(json.dumps(repo_info))
-            self.page_bar.set_description(f"page{page}: ")
+                self.repo_bar.set_description(f"repos{self.repo_index} -> success")
+            self.page_bar.set_description(f"page{page}")
 
     async def get_total_repo(self) -> int:
         url = self.search_base_url + "?q=" + f"stars:>={self.stars_gte}"
