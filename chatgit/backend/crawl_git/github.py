@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import random
 from enum import Enum
@@ -20,20 +21,13 @@ class CrawlFailStage(str, Enum):
     GET_README = "get_readme"
 
 
-class CrawlGithubBase(CrawlGitBase):
-    def __init__(self, proxies: Dict[str, Any] = None) -> None:
-        if proxies is None:
-            proxies = {}
-        super().__init__("https://api.github.com/search/repositories")
-        self.proxies = proxies
-
-
 class AsyncCrawlGithub(CrawlGitBase):
     def __init__(self, proxies: Dict[str, Any] = None) -> None:
         if proxies is None:
             proxies = {}
-        super().__init__("https://api.github.com/search/repositories")
+        super().__init__("https://api.github.com")
         self.proxies = {proxy_schema + "://": proxy_value for proxy_schema, proxy_value in proxies.items()}
+        self.search_base_url = self.base_url + "/search/repositories"
 
     @sleep_and_retry
     @limits(calls=30, period=60)
@@ -54,25 +48,25 @@ class AsyncCrawlGithub(CrawlGitBase):
                 if flag > 10:
                     raise
 
-    # @sleep_and_retry
-    # async def request_content(self, url: str) -> Response:
-    #     flag = 0
-    #     while True:
-    #         proxy_dict = self.get_proxy()
-    #         try:
-    #             resp = await self.async_request(HttpMethod.GET, url,
-    #                                             proxies={"http://": f"http://{proxy_dict['http']}"})
-    #             if resp.status_code == 403:
-    #                 await asyncio.sleep(3)
-    #                 continue
-    #             return resp
-    #         except Exception:
-    #             flag += 1
-    #             if flag > 10:
-    #                 raise
-    #
-    #
-    #     return await self.async_request(HttpMethod.GET, url, proxies=self.proxies)
+    async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> str | None:
+        readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
+        response = await self.request_github(readme_url)
+        if response.status_code == 200:
+            response_data = response.json()
+            readme_content = response_data["content"]
+            decoded_content = base64.b64decode(readme_content).decode("utf-8")
+            return decoded_content
+        logger.failure(
+            json.dumps(
+                {
+                    "url": readme_url,
+                    "failure_stage": fail_stage.value,
+                    "meta_info": meta_info,
+                    "error_msg": None,
+                }
+            )
+        )
+        return None
 
     async def handle_request(self, url: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Response | None:
         try:
@@ -101,7 +95,7 @@ class AsyncCrawlGithub(CrawlGitBase):
         total_page = int(total_count / page_size) + 1
         for page in tqdm(range(1, total_page + 1), desc="process", total=total_page):
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
-            url = self.base_url + "?q=" + query_param_str
+            url = self.search_base_url + "?q=" + query_param_str
             repo_resp = await self.handle_request(url, CrawlFailStage.GET_REPOS)
             if repo_resp is None:
                 continue
@@ -109,6 +103,7 @@ class AsyncCrawlGithub(CrawlGitBase):
             for repo_json in tqdm(repos, desc="repos", total=len(repos)):
                 id = repo_json["id"]
                 name = repo_json["name"]
+                full_name = repo_json["full_name"]
                 index_url = repo_json["html_url"]
                 api_url = repo_json["url"]
                 description = repo_json["description"]
@@ -120,6 +115,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                 repo_info = {
                     "repo_id": id,
                     "name": name,
+                    "full_name": full_name,
                     "index_url": index_url,
                     "api_url": api_url,
                     "description": description,
@@ -129,39 +125,15 @@ class AsyncCrawlGithub(CrawlGitBase):
                     "license": license,
                     "topics": topics,
                 }
-                contents_url = api_url + "/contents"
-                contents_resp = await self.handle_request(contents_url, fail_stage=CrawlFailStage.GET_CONTENTS)
-                if contents_resp is None:
+                readme_content = await self.download_readme(full_name, CrawlFailStage.GET_README, repo_info)
+                if readme_content is None:
                     continue
-                contents_json = contents_resp.json()
-                readme_urls = [file["download_url"] for file in contents_json if file["name"].lower() == "readme.md"]
-                if readme_urls:
-                    readme_url = readme_urls[0]
-                else:
-                    logger.failure(
-                        json.dumps(
-                            {
-                                "url": contents_url,
-                                "failure_stage": CrawlFailStage.GET_CONTENTS.value,
-                                "meta_info": repo_info,
-                                "failure_body": contents_resp.json(),
-                            }
-                        )
-                    )
-                    continue
-                meta_info = repo_info.copy()
-                meta_info["readme_url"] = readme_url
-
-                resp = await self.handle_request(readme_url, CrawlFailStage.GET_README, meta_info=repo_info)
-                if resp is None:
-                    continue
-                readme_content = resp.text
                 repo_info["readme_content"] = readme_content
                 yield Repositories(**repo_info)
                 # logger.success(json.dumps(repo_info))
 
     async def get_total_repo(self) -> int:
-        url = self.base_url + "?q=" + f"stars:>={self.stars_gte}"
+        url = self.search_base_url + "?q=" + f"stars:>={self.stars_gte}"
         resp = await self.request_github(url)
         if resp.status_code == 200:
             data_json = resp.json()
