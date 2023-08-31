@@ -28,8 +28,8 @@ class AsyncCrawlGithub(CrawlGitBase):
         super().__init__("https://api.github.com")
         self.proxies = {proxy_schema + "://": proxy_value for proxy_schema, proxy_value in proxies.items()}
         self.search_base_url = self.base_url + "/search/repositories"
-        self.page_bar: Bar
-        self.repo_bar: Bar
+        self.page_bar: Bar = None
+        self.repo_bar: Bar = None
         self.repo_index = 0
 
     # @sleep_and_retry
