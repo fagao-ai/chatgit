@@ -34,7 +34,7 @@ target_metadata = None
 
 # dburl = context.get_x_argument(as_dictionary=True).get("dburl")
 db_config = project_config.database
-db_password = f":{db_config.password}" if db_config.password else ""
+db_password = f"{db_config.password}" if db_config.password else ""
 db_url = f"mysql+pymysql://{db_config.username}:{db_password}@{db_config.host}:{db_config.port}/{db_config.db_name}"
 
 
