@@ -24,6 +24,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("repo_id", sa.Integer),
         sa.Column("name", sa.String(200)),
+        sa.Column("full_name", sa.String(200)),
         sa.Column("index_url", sa.String(200)),
         sa.Column("api_url", sa.String(200)),
         sa.Column("description", sa.Text),
