@@ -3,7 +3,7 @@ import base64
 import json
 from asyncio import Queue
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, Tuple
+from typing import AsyncGenerator, Dict, Tuple
 
 from httpx import Response
 from proxybroker2 import Broker, Proxy
@@ -22,11 +22,8 @@ class CrawlFailStage(str, Enum):
 
 
 class AsyncCrawlGithub(CrawlGitBase):
-    def __init__(self, proxies: Dict[str, Any] = None) -> None:
-        if proxies is None:
-            proxies = {}
+    def __init__(self) -> None:
         super().__init__("https://api.github.com")
-        self.proxies = {proxy_schema + "://": proxy_value for proxy_schema, proxy_value in proxies.items()}
         self.search_base_url = self.base_url + "/search/repositories"
         self.page_bar: Bar = None
         self.repo_bar: Bar = None
@@ -137,10 +134,9 @@ class AsyncCrawlGithub(CrawlGitBase):
 
 
 if __name__ == "__main__":
-    proxies = {"https:": "http://localhost:20171"}
 
     async def run_async_crawl() -> None:
-        crawl_github = AsyncCrawlGithub(proxies=proxies)
+        crawl_github = AsyncCrawlGithub()
         async for repo in crawl_github.get_data(page_size=100):
             print(repo)
 
