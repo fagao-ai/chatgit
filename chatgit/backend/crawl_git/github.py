@@ -1,16 +1,15 @@
 import asyncio
 import base64
 import json
-from asyncio import Queue
 from enum import Enum
 from typing import AsyncGenerator, Dict, Tuple
 
 from httpx import Response
-from proxybroker2 import Broker, Proxy
 from tqdm import tqdm
 from tqdm.std import Bar
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
+from chatgit.common import config
 from chatgit.common.logger import logger  # types: ignore
 from chatgit.models.repositories import Repositories
 
@@ -28,8 +27,6 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.page_bar: Bar = None
         self.repo_bar: Bar = None
         self.repo_index = 0
-        self.proxies_queue: Queue[Proxy] = asyncio.Queue()
-        self.last_proxy: Dict[str, str] = {}
 
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
@@ -60,15 +57,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 await asyncio.sleep(0.1)
                 continue
 
-    async def find_proxies(self) -> None:
-        broker = Broker(self.proxies_queue)
-        await broker.find(types=["HTTP", "HTTPS"], limit=100, strict=True, lvl="High")
-
     async def get_proxy(self) -> Dict[str, str]:
-        if self.last_proxy:
-            return self.last_proxy
-        proxy: Proxy = await self.proxies_queue.get()
-        http_proxy = f"http://{proxy.host}:{proxy.port}"
+        http_proxy = f"http://{config.proxy.proxy}"
         return {"http": http_proxy}
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, None]:  # type: ignore
