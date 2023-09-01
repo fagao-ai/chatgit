@@ -40,7 +40,6 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def forever_request_github(self, url: str) -> Response:
         while True:
             proxy_dict = await self.get_proxy()
-            print(proxy_dict)
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
