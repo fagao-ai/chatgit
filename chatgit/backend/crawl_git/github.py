@@ -2,6 +2,8 @@ import asyncio
 import base64
 import json
 import random
+import subprocess
+import time
 from enum import Enum
 from typing import AsyncGenerator, Dict, Tuple
 
@@ -30,6 +32,17 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.repo_index = 0
         self.proxys = config.proxy.proxy.split(";")
 
+    @staticmethod
+    def start_proxybroker() -> None:
+        subprocess.Popen(
+            ["proxybroker", "serve", "--host", "127.0.0.1", "--port", "8888", "--types", "HTTP", "HTTPS", "--lvl", "High", "--min-queue", "100", "--strict"]
+        )
+
+    @staticmethod
+    def stop_proxybroker() -> None:
+        subprocess.run(["pkill", "proxybroker"])
+        time.sleep(3)
+
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
         response = await self.forever_request_github(readme_url)
@@ -40,7 +53,12 @@ class AsyncCrawlGithub(CrawlGitBase):
         return decoded_content, readme_name
 
     async def forever_request_github(self, url: str) -> Response:
+        flag = 0
         while True:
+            if flag > 10:
+                print("restart proxybroker!!!")
+                self.stop_proxybroker()
+                self.start_proxybroker()
             proxy_dict = await self.get_proxy()
             try:
                 proxies = {
@@ -53,9 +71,11 @@ class AsyncCrawlGithub(CrawlGitBase):
                     return resp
                 self.last_proxy = {}
                 await asyncio.sleep(0.1)
+                flag += 1
             except Exception:
                 self.last_proxy = {}
                 await asyncio.sleep(0.1)
+                flag += 1
                 continue
 
     async def get_proxy(self) -> Dict[str, str]:
