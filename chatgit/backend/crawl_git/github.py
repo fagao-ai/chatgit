@@ -1,16 +1,16 @@
 import asyncio
 import base64
 import json
+from asyncio import Queue
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Tuple
 
-from requests import Response
-from tenacity import retry, stop_after_attempt
+from httpx import Response
+from proxybroker2 import Broker, Proxy
 from tqdm import tqdm
 from tqdm.std import Bar
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
-from chatgit.common import config
 from chatgit.common.logger import logger  # types: ignore
 from chatgit.models.repositories import Repositories
 
@@ -31,78 +31,44 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.page_bar: Bar = None
         self.repo_bar: Bar = None
         self.repo_index = 0
+        self.proxies_queue: Queue[Proxy] = asyncio.Queue()
+        self.last_proxy: Dict[str, str] = {}
 
-    # @sleep_and_retry
-    # @limits(calls=30, period=60)
-    @retry(stop=stop_after_attempt(3))
-    async def request_github(self, url: str) -> Response:
-        flag = 0
+    async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
+        readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
+        response = await self.forever_request_github(readme_url)
+        response_data = response.json()
+        readme_content = response_data["content"]
+        readme_name = response_data["name"]
+        decoded_content = base64.b64decode(readme_content).decode("utf-8")
+        return decoded_content, readme_name
+
+    async def forever_request_github(self, url: str) -> Response:
         while True:
-            proxy_dict = self.get_proxy()
+            proxy_dict = await self.get_proxy()
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
                     "https://": proxy_dict["http"],
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
-                if resp.status_code == 403:
-                    if self.repo_bar:
-                        self.repo_bar.set_description(f"repo{self.repo_index} -> rate_limit")
-                    await asyncio.sleep(1)
-                    continue
-                return resp
-            except Exception as e:
-                flag += 1
-                if flag > 10:
-                    if self.repo_bar:
-                        self.repo_bar.set_description(f"repo{self.repo_index} -> exception:{e}")
-                    raise
+                if resp.status_code == 200:
+                    self.last_proxy = proxy_dict
+                    return resp
+                self.last_proxy = {}
+            except Exception:
+                self.last_proxy = {}
+                continue
 
-    async def download_readme(self, project_full_name: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Tuple[str, str] | None:
-        readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
-        try:
-            response = await self.request_github(readme_url)
-            if response.status_code == 200:
-                response_data = response.json()
-                readme_content = response_data["content"]
-                readme_name = response_data["name"]
-                decoded_content = base64.b64decode(readme_content).decode("utf-8")
-                return decoded_content, readme_name
-            raise
-        except Exception as e:
-            self.repo_bar.set_description(f"repos{self.repo_index} -> failure")
-            logger.failure(
-                json.dumps(
-                    {
-                        "url": readme_url,
-                        "failure_stage": fail_stage.value,
-                        "meta_info": meta_info,
-                        "error_msg": str(e),
-                    }
-                )
-            )
-            return None
+    async def find_proxies(self) -> None:
+        broker = Broker(self.proxies_queue)
+        await broker.find(types=["HTTP", "HTTPS"], limit=100, strict=True, lvl="High")
 
-    async def handle_request(self, url: str, fail_stage: CrawlFailStage, meta_info: Dict[str, Any] = None) -> Response | None:
-        try:
-            repo_resp = await self.request_github(url)
-            return repo_resp
-        except Exception as e:
-            logger.failure(
-                json.dumps(
-                    {
-                        "url": url,
-                        "failure_stage": fail_stage.value,
-                        "meta_info": meta_info,
-                        "error_msg": str(e),
-                    }
-                )
-            )
-        return None
-
-    @staticmethod
-    def get_proxy() -> Dict[str, str]:
-        http_proxy = "http://" + config.proxy.proxy
+    async def get_proxy(self) -> Dict[str, str]:
+        if self.last_proxy:
+            return self.last_proxy
+        proxy: Proxy = await self.proxies_queue.get()
+        http_proxy = f"http://{proxy.host}:{proxy.port}"
         return {"http": http_proxy}
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, None]:  # type: ignore
@@ -112,10 +78,20 @@ class AsyncCrawlGithub(CrawlGitBase):
         for page in self.page_bar:
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.search_base_url + "?q=" + query_param_str
-            repo_resp = await self.handle_request(url, CrawlFailStage.GET_REPOS)
-            if repo_resp is None:
+            repo_resp = await self.forever_request_github(url)
+            repos = repo_resp.json().get("items")
+            if repos is None:
+                logger.failure(
+                    json.dumps(
+                        {
+                            "url": url,
+                            "failure_stage": CrawlFailStage.GET_REPOS.value,
+                            "meta_info": {},
+                            "error_msg": repo_resp.json(),
+                        }
+                    )
+                )
                 continue
-            repos = repo_resp.json()["items"]
             self.repo_bar = tqdm(repos, desc="repos0 -> start: ", total=len(repos))
             for repo_json in self.repo_bar:
                 self.repo_index += 1
@@ -143,7 +119,7 @@ class AsyncCrawlGithub(CrawlGitBase):
                     "license": license,
                     "topics": topics,
                 }
-                readme_tuple = await self.download_readme(full_name, CrawlFailStage.GET_README, repo_info)
+                readme_tuple = await self.download_readme(full_name)
                 if readme_tuple is None:
                     continue
                 readme_content, readme_name = readme_tuple
@@ -155,12 +131,9 @@ class AsyncCrawlGithub(CrawlGitBase):
 
     async def get_total_repo(self) -> int:
         url = self.search_base_url + "?q=" + f"stars:>={self.stars_gte}"
-        resp = await self.request_github(url)
-        if resp.status_code == 200:
-            data_json = resp.json()
-            return data_json["total_count"]
-        else:
-            raise Exception("Get total_repo failed.")
+        resp = await self.forever_request_github(url)
+        data_json = resp.json()
+        return data_json["total_count"]
 
 
 if __name__ == "__main__":
