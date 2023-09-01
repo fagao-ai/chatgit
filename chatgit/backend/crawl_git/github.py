@@ -1,13 +1,12 @@
 import asyncio
 import base64
 import json
-import random
-import subprocess
-import time
+from asyncio import Queue
 from enum import Enum
-from typing import AsyncGenerator, Dict, Tuple
+from typing import AsyncGenerator, Dict, Set, Tuple
 
 from httpx import Response
+from proxybroker2 import Broker, Proxy
 from tqdm import tqdm
 from tqdm.std import Bar
 
@@ -31,17 +30,18 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.repo_bar: Bar = None
         self.repo_index = 0
         self.proxys = config.proxy.proxy.split(";")
+        self.proxies: Queue[Proxy] = asyncio.Queue()
+        self.available_proxys: Set[str] = set()
 
-    @staticmethod
-    def start_proxybroker() -> None:
-        subprocess.Popen(
-            ["proxybroker", "serve", "--host", "127.0.0.1", "--port", "8888", "--types", "HTTP", "HTTPS", "--lvl", "High", "--min-queue", "100", "--strict"]
-        )
-
-    @staticmethod
-    def stop_proxybroker() -> None:
-        subprocess.run(["pkill", "proxybroker"])
-        time.sleep(3)
+    async def find_proxies(self) -> None:
+        if self.proxies.empty():
+            broker = Broker(self.proxies)
+            print("find_proxies")
+            await broker.find(types=["HTTP", "HTTPS"], limit=200, lvl="High")
+            while broker._all_tasks:
+                await asyncio.sleep(1)
+            await broker.stop()
+            print("stop")
 
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
@@ -53,13 +53,9 @@ class AsyncCrawlGithub(CrawlGitBase):
         return decoded_content, readme_name
 
     async def forever_request_github(self, url: str) -> Response:
-        flag = 0
         while True:
-            if flag > 10:
-                print("restart proxybroker!!!")
-                self.stop_proxybroker()
-                self.start_proxybroker()
             proxy_dict = await self.get_proxy()
+            self.available_proxys.add(proxy_dict["http"])
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
@@ -67,21 +63,22 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 200:
-                    self.last_proxy = proxy_dict
                     return resp
-                self.last_proxy = {}
                 await asyncio.sleep(0.1)
-                flag += 1
             except Exception:
-                self.last_proxy = {}
                 await asyncio.sleep(0.1)
-                flag += 1
                 continue
 
     async def get_proxy(self) -> Dict[str, str]:
-        proxy = random.choice(self.proxys)
-        http_proxy = f"http://{proxy}"
-        return {"http": http_proxy}
+        if self.available_proxys:
+            http_proxy = self.available_proxys.pop()
+            return {"http": http_proxy}
+        if not self.proxies.empty():
+            proxy = await self.proxies.get()
+            http_proxy = f"http://{proxy.host}:{proxy.port}"
+            return {"http": http_proxy}
+        await self.find_proxies()
+        return await self.get_proxy()
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, None]:  # type: ignore
         total_count = await self.get_total_repo()
