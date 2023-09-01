@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+import random
 from enum import Enum
 from typing import AsyncGenerator, Dict, Tuple
 
@@ -27,6 +28,7 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.page_bar: Bar = None
         self.repo_bar: Bar = None
         self.repo_index = 0
+        self.proxys = config.proxy.proxy.split(";")
 
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
@@ -57,7 +59,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 continue
 
     async def get_proxy(self) -> Dict[str, str]:
-        http_proxy = f"http://{config.proxy.proxy}"
+        proxy = random.choice(self.proxys)
+        http_proxy = f"http://{proxy}"
         return {"http": http_proxy}
 
     async def get_data(self, page_size: int = 100) -> AsyncGenerator[Repositories, None]:  # type: ignore
