@@ -69,16 +69,19 @@ class AsyncCrawlGithub(CrawlGitBase):
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 200:
                     self.available_proxys.add(proxy_dict["http"])
-                    self.repo_bar.set_description(f"repo{self.repo_index} -> success -> {len(self.available_proxys)}")
+                    if self.repo_bar:
+                        self.repo_bar.set_description(f"repo{self.repo_index} -> success -> {len(self.available_proxys)}")
                     return resp
                 if proxy_dict["http"] in self.available_proxys:
                     self.available_proxys.remove(proxy_dict["http"])
-                    self.repo_bar.set_description(f"repo{self.repo_index} -> failure -> {len(self.available_proxys)}")
+                    if self.repo_bar:
+                        self.repo_bar.set_description(f"repo{self.repo_index} -> failure -> {len(self.available_proxys)}")
                 await asyncio.sleep(1)
             except Exception:
                 if proxy_dict["http"] in self.available_proxys:
                     self.available_proxys.remove(proxy_dict["http"])
-                    self.repo_bar.set_description(f"repo{self.repo_index} -> failure -> {len(self.available_proxys)}")
+                    if self.repo_bar:
+                        self.repo_bar.set_description(f"repo{self.repo_index} -> failure -> {len(self.available_proxys)}")
                 await asyncio.sleep(1)
                 continue
 
