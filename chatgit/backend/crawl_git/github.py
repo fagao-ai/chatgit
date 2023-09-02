@@ -11,6 +11,8 @@ from tqdm import tqdm
 from tqdm.std import Bar
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
+from chatgit.backend.crawl_git.local_kv_store import LocalKVDatabase
+from chatgit.common import config
 from chatgit.common.logger import logger  # types: ignore
 from chatgit.models.repositories import Repositories
 
@@ -31,6 +33,7 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.proxies: Queue[Proxy] = asyncio.Queue()
         self.broker: Broker = Broker(self.proxies)
         self.available_proxys: List[str] = []
+        self.local_kv_store = LocalKVDatabase()
 
     async def find_proxies(self) -> None:
         if self.proxies.empty():
@@ -61,6 +64,8 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def forever_request_github(self, url: str) -> Response:
         while True:
             proxy_dict = await self.get_proxy()
+            if self.local_kv_store.get(proxy_dict["http"]):  # proxy not expire
+                continue
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
@@ -73,6 +78,9 @@ class AsyncCrawlGithub(CrawlGitBase):
                     if self.repo_bar:
                         self.repo_bar.set_description(f"repo{self.repo_index} -> success -> {len(self.available_proxys)}")
                     return resp
+                elif resp.status_code == 403:
+                    if not self.local_kv_store.get(proxy_dict["http"]):
+                        self.local_kv_store.set(proxy_dict["http"], proxy_dict["http"], ttl=3600)
                 if proxy_dict["http"] in self.available_proxys:
                     self.available_proxys.remove(proxy_dict["http"])
                     if self.repo_bar:
@@ -104,6 +112,9 @@ class AsyncCrawlGithub(CrawlGitBase):
         total_page = int(total_count / page_size) + 1
         self.page_bar = tqdm(range(1, total_page + 1), desc="page1: ", total=total_page)
         for page in self.page_bar:
+            if page < config.crawl.start_page:
+                self.page_bar.set_description(f"page{page}")
+                continue
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.search_base_url + "?q=" + query_param_str
             repo_resp = await self.forever_request_github(url)

@@ -9,3 +9,5 @@ db_name = "chatgit"
 host = "localhost"
 port = 6333
 
+[crawl]
+start_page = 1

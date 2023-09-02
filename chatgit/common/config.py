@@ -21,9 +21,14 @@ class QdrantConnection(BaseModel):
     memory: bool | None = False
 
 
+class CrawlConfig(BaseModel):
+    start_page: int
+
+
 class Config(MyBaseSettings):
     database: Database
     qdrant: QdrantConnection = QdrantConnection()
+    crawl: CrawlConfig
 
     class Config:
         env_file = PROJECT_PATH / "chatgit/config/config.dev.toml"
