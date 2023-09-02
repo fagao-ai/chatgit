@@ -23,6 +23,7 @@ class QdrantConnection(BaseModel):
 
 class CrawlConfig(BaseModel):
     start_page: int
+    proxy_limit: int
 
 
 class Config(MyBaseSettings):
