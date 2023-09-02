@@ -3,7 +3,7 @@ import base64
 import json
 from asyncio import Queue
 from enum import Enum
-from typing import AsyncGenerator, Dict, Set, Tuple
+from typing import AsyncGenerator, Dict, List, Tuple
 
 from httpx import Response
 from proxybroker2 import Broker, Proxy
@@ -30,7 +30,7 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.repo_index = 0
         self.proxies: Queue[Proxy] = asyncio.Queue()
         self.broker: Broker = Broker(self.proxies)
-        self.available_proxys: Set[str] = set()
+        self.available_proxys: List[str] = []
 
     async def find_proxies(self) -> None:
         if self.proxies.empty():
@@ -68,7 +68,8 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 200:
-                    self.available_proxys.add(proxy_dict["http"])
+                    if proxy_dict["http"] not in self.available_proxys:
+                        self.available_proxys.append(proxy_dict["http"])
                     if self.repo_bar:
                         self.repo_bar.set_description(f"repo{self.repo_index} -> success -> {len(self.available_proxys)}")
                     return resp
@@ -87,7 +88,7 @@ class AsyncCrawlGithub(CrawlGitBase):
 
     async def get_proxy(self) -> Dict[str, str]:
         if self.available_proxys:
-            http_proxy = self.available_proxys.pop()
+            http_proxy = self.available_proxys[-1]
             return {"http": http_proxy}
         if not self.proxies.empty():
             proxy = await self.proxies.get()
