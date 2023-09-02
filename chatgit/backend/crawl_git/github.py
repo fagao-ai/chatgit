@@ -115,6 +115,7 @@ class AsyncCrawlGithub(CrawlGitBase):
             if page < config.crawl.start_page:
                 self.page_bar.set_description(f"page{page}")
                 continue
+            self.page_bar.set_description(f"page{page}")
             query_param_str = f"stars:>={self.stars_gte}&sort=stars&per_page={page_size}&page={page}"
             url = self.search_base_url + "?q=" + query_param_str
             repo_resp = await self.forever_request_github(url)
