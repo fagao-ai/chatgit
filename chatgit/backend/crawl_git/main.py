@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from chatgit.backend.crawl_git.github import AsyncCrawlGithub
@@ -16,6 +17,6 @@ async def run_async_crawl() -> None:
 
 
 if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(run_async_crawl())
+    # https://github.com/constverum/ProxyBroker/issues/162
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_async_crawl())

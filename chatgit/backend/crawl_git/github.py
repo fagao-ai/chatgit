@@ -40,7 +40,8 @@ class AsyncCrawlGithub(CrawlGitBase):
             await broker.find(types=["HTTP", "HTTPS"], limit=20, lvl="High", strict=True)
             while broker._all_tasks:
                 await asyncio.sleep(1)
-            await broker.stop()
+            if broker:
+                broker.stop()
             print("stop")
 
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
