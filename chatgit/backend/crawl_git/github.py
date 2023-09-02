@@ -31,18 +31,25 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.repo_index = 0
         self.proxys = config.proxy.proxy.split(";")
         self.proxies: Queue[Proxy] = asyncio.Queue()
+        self.broker: Broker = Broker(self.proxies)
         self.available_proxys: Set[str] = set()
 
     async def find_proxies(self) -> None:
         if self.proxies.empty():
-            broker = Broker(self.proxies)
             print("find_proxies")
-            await broker.find(types=["HTTP", "HTTPS"], limit=20, lvl="High", strict=True)
-            while broker._all_tasks:
+            await self.broker.find(types=["HTTP", "HTTPS"], limit=20, lvl="High", strict=True)
+            while self.broker._all_tasks:
                 await asyncio.sleep(1)
-            if broker:
-                broker.stop()
+            self.stop_broker()
             print("stop")
+
+    def stop_broker(self) -> None:
+        if self.broker:
+            self.broker.stop()
+
+    def stop_crawl(self) -> None:
+        self.broker.stop()
+        raise KeyboardInterrupt
 
     async def download_readme(self, project_full_name: str) -> Tuple[str, str] | None:
         readme_url = f"{self.base_url}/repos/{project_full_name}/readme"
@@ -56,7 +63,6 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def forever_request_github(self, url: str) -> Response:
         while True:
             proxy_dict = await self.get_proxy()
-
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
