@@ -21,13 +21,8 @@ class QdrantConnection(BaseModel):
     memory: bool | None = False
 
 
-class Proxy(BaseModel):
-    proxy: str
-
-
 class Config(MyBaseSettings):
     database: Database
-    proxy: Proxy
     qdrant: QdrantConnection = QdrantConnection()
 
     class Config:
@@ -48,5 +43,3 @@ config = Config()
 db_url = (
     f"mysql://{config.database.username}:{config.database.password}@{config.database.host}:{config.database.port}/{config.database.db_name}?charset=utf8mb4"
 )
-
-print(config.proxy.proxy)
