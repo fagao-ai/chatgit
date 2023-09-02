@@ -37,7 +37,7 @@ class AsyncCrawlGithub(CrawlGitBase):
         if self.proxies.empty():
             broker = Broker(self.proxies)
             print("find_proxies")
-            await broker.find(types=["HTTP", "HTTPS"], limit=200, lvl="High")
+            await broker.find(types=["HTTP", "HTTPS"], limit=20, lvl="High", strict=True)
             while broker._all_tasks:
                 await asyncio.sleep(1)
             await broker.stop()
