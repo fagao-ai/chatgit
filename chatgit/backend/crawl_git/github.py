@@ -85,8 +85,9 @@ class AsyncCrawlGithub(CrawlGitBase):
             return {"http": http_proxy}
         if not self.proxies.empty():
             proxy = await self.proxies.get()
-            http_proxy = f"http://{proxy.host}:{proxy.port}"
-            return {"http": http_proxy}
+            if proxy:
+                http_proxy = f"http://{proxy.host}:{proxy.port}"
+                return {"http": http_proxy}
         print("proxies queue is empty!!!")
         await self.find_proxies()
         return await self.get_proxy()
