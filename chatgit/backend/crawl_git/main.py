@@ -1,10 +1,10 @@
 import asyncio
-import logging
 
+# import logging
 from chatgit.backend.crawl_git.github import AsyncCrawlGithub
 from chatgit.models import database
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 async def run_async_crawl() -> None:

@@ -68,11 +68,11 @@ class AsyncCrawlGithub(CrawlGitBase):
                     return resp
                 if proxy_dict["http"] in self.available_proxys:
                     self.available_proxys.remove(proxy_dict["http"])
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(1)
             except Exception:
                 if proxy_dict["http"] in self.available_proxys:
                     self.available_proxys.remove(proxy_dict["http"])
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(1)
                 continue
 
     async def get_proxy(self) -> Dict[str, str]:
