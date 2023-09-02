@@ -11,7 +11,6 @@ from tqdm import tqdm
 from tqdm.std import Bar
 
 from chatgit.backend.crawl_git.crawl_git_base import CrawlGitBase, HttpMethod
-from chatgit.common import config
 from chatgit.common.logger import logger  # types: ignore
 from chatgit.models.repositories import Repositories
 
@@ -29,7 +28,6 @@ class AsyncCrawlGithub(CrawlGitBase):
         self.page_bar: Bar = None
         self.repo_bar: Bar = None
         self.repo_index = 0
-        self.proxys = config.proxy.proxy.split(";")
         self.proxies: Queue[Proxy] = asyncio.Queue()
         self.broker: Broker = Broker(self.proxies)
         self.available_proxys: Set[str] = set()
