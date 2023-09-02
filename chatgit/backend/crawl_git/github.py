@@ -55,7 +55,7 @@ class AsyncCrawlGithub(CrawlGitBase):
     async def forever_request_github(self, url: str) -> Response:
         while True:
             proxy_dict = await self.get_proxy()
-            self.available_proxys.add(proxy_dict["http"])
+
             try:
                 proxies = {
                     "http://": proxy_dict["http"],
@@ -63,9 +63,12 @@ class AsyncCrawlGithub(CrawlGitBase):
                 }
                 resp = await self.async_request(HttpMethod.GET, url, proxies=proxies)
                 if resp.status_code == 200:
+                    self.available_proxys.add(proxy_dict["http"])
                     return resp
+                self.available_proxys.remove(proxy_dict["http"])
                 await asyncio.sleep(0.1)
             except Exception:
+                self.available_proxys.remove(proxy_dict["http"])
                 await asyncio.sleep(0.1)
                 continue
 
@@ -77,6 +80,7 @@ class AsyncCrawlGithub(CrawlGitBase):
             proxy = await self.proxies.get()
             http_proxy = f"http://{proxy.host}:{proxy.port}"
             return {"http": http_proxy}
+        print("proxies queue is empty!!!")
         await self.find_proxies()
         return await self.get_proxy()
 

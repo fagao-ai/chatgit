@@ -6,7 +6,6 @@ async def run_async_crawl() -> None:
     if not database.is_connected:
         await database.connect()
     crawl_github = AsyncCrawlGithub()
-    crawl_github.start_proxybroker()
     async for repo in crawl_github.get_data(page_size=100):
         await repo.save()
     await database.disconnect()
