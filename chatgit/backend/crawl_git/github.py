@@ -66,10 +66,12 @@ class AsyncCrawlGithub(CrawlGitBase):
                 if resp.status_code == 200:
                     self.available_proxys.add(proxy_dict["http"])
                     return resp
-                self.available_proxys.remove(proxy_dict["http"])
+                if proxy_dict["http"] in self.available_proxys:
+                    self.available_proxys.remove(proxy_dict["http"])
                 await asyncio.sleep(0.1)
             except Exception:
-                self.available_proxys.remove(proxy_dict["http"])
+                if proxy_dict["http"] in self.available_proxys:
+                    self.available_proxys.remove(proxy_dict["http"])
                 await asyncio.sleep(0.1)
                 continue
 
