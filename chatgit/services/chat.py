@@ -1,5 +1,4 @@
 import os
-import logging
 from typing import ClassVar
 from openai import AsyncOpenAI
 from openai.types.chat.chat_completion_user_message_param import ChatCompletionUserMessageParam
@@ -9,7 +8,7 @@ from chatgit.services.github import Github
 
 class ChatMessageChunk(BaseModel):
     reasoning_content: str | None = Field(default=None)
-    content: str = Field(default_factory=str)
+    content: str | None = Field(default=None)
 
 class ChatService:
     PROMPT: ClassVar[str] = """**角色**：你是一个资深开源项目分析师，擅长通过文档结构、技术描述和社区规范评估项目质量。
@@ -77,7 +76,7 @@ class ChatService:
             api_key = os.environ.get("OPENAI_API_KEY")
         if base_url is None:
             base_url = os.environ.get("OPENAI_API_BASE")
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
+        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3)
         self.model = model
 
     async def chat(self, repo_url: str, github_token: str | None = None):
@@ -88,10 +87,8 @@ class ChatService:
             messages=messages,
             stream=True
         )
-        logging.info("here")
         async for chunk in response:
-            logging.info(chunk)
-            if chunk.choices[0].delta.reasoning_content: # type: ignore
+            if hasattr(chunk.choices[0].delta, "reasoning_content"): # type: ignore
                 yield ChatMessageChunk(reasoning_content=chunk.choices[0].delta.reasoning_content) # type: ignore
             else: 
                 yield ChatMessageChunk(content=chunk.choices[0].delta.content, reasoning_content=None) # type: ignore

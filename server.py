@@ -30,4 +30,5 @@ if __name__ == "__main__":
         "server:app",
         host="0.0.0.0",
         reload=True,
+        log_level="debug",
     )
