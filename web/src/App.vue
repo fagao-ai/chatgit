@@ -43,7 +43,7 @@
       </div>
 
       <!-- 消息区域 -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- <div class="flex-1 overflow-y-auto p-4 space-y-4">
         <div
           v-for="(message, index) in messages"
           :key="index"
@@ -56,8 +56,30 @@
             <MarkdownRenderer :content="message.content" />
           </div>
         </div>
+      </div> -->
+      <div class="flex-1 relative">
+        <div
+          ref="messagesContainer"
+          class="absolute inset-0 overflow-y-auto p-4 space-y-4"
+        >
+          <div
+            v-for="(message, index) in messages"
+            :key="index"
+            :class="['flex', message.isUser ? 'justify-end' : 'justify-start']"
+          >
+            <div :class="['max-w-2xl p-4 rounded-2xl',
+              message.isUser
+                ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
+                : 'bg-gray-800 text-gray-100']">
+              <!-- 修改为实时渲染模式 -->
+              <StreamingMarkdown
+                :content="message.content"
+                :streaming="message.streaming"
+              />
+            </div>
+          </div>
+        </div>
       </div>
-
       <!-- 输入区 -->
       <div class="p-4 bg-gray-800 border-t border-gray-700">
         <form
@@ -101,10 +123,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Spinner from '@/components/Spinner.vue'
+import { chatGithub, health } from '@/apis'
 
 interface Chat {
   id: string
@@ -117,7 +141,9 @@ interface Message {
   content: string
   isUser: boolean
   timestamp: Date
+  streaming?: boolean
 }
+health()
 
 const isSidebarCollapsed = ref(false)
 const inputUrl = ref('')
@@ -155,21 +181,41 @@ const handleSubmit = async () => {
   try {
     isLoading.value = true
     // 调用你的后端API
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      body: JSON.stringify({ url: inputUrl.value })
+    const stream = await chatGithub({
+      url: inputUrl.value,
+      model: 'gpt-4o',
     })
 
-    const data = await response.json()
-
+    let content = ""
+    if (!chatHistory.value.length) {
+      startNewChat()
+    }
     // 添加到当前对话
     const chat = chatHistory.value.find(c => c.id === currentChatId.value)
     if (chat) {
       chat.messages.push(
         { content: inputUrl.value, isUser: true, timestamp: new Date() },
-        { content: data.analysisResult, isUser: false, timestamp: new Date() }
+        { content: content, isUser: false, timestamp: new Date(), streaming: true }
       )
-      chat.title = data.projectName || '项目分析'
+      chat.title = '项目分析'
+    }
+    const lastMessage = chat?.messages[chat.messages.length - 1]
+    for await (let event of stream) {
+      console.log('<<', event.data);
+      try {
+        const msg = JSON.parse(event.data ?? '')
+        content += msg.content
+        if (lastMessage) {
+          lastMessage.content = content
+          lastMessage.streaming = true
+        }
+      } catch (e) {
+
+      }
+    }
+
+    if (lastMessage) {
+      lastMessage.streaming = false
     }
 
     inputUrl.value = ''
@@ -177,6 +223,19 @@ const handleSubmit = async () => {
     isLoading.value = false
   }
 }
+
+const messagesContainer = ref<HTMLElement>()
+
+watch(messages, () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTo({
+        top: messagesContainer.value.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  })
+}, { deep: true })
 </script>
 
 <style scoped>
