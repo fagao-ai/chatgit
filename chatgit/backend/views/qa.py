@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from sse_starlette import EventSourceResponse
 
-from chatgit.backend.schemas.chat import CompletionRequest
+from chatgit.backend.schemas.chat import CompletionRequest, GithubRequest
 from chatgit.services.chat import ChatService
+from chatgit.services.github import Github
 
 
 __all__ = ["router"]
@@ -10,48 +11,23 @@ __all__ = ["router"]
 router = APIRouter(prefix="/chat", tags=["qa"])
 
 
-@router.post("/completions", response_class=EventSourceResponse)
-async def completions(schema: CompletionRequest):
+@router.post("/git-repo", response_class=EventSourceResponse)
+async def chat_git_repo(schema: GithubRequest):
     stream = ChatService(
         schema.model, api_key=schema.api_key, base_url=schema.base_url
-    ).chat(repo_url=schema.url.__str__(), github_token=schema.github_token)
-    return EventSourceResponse(
-        content=(message.model_dump_json() async for message in stream)
-    )
-    import json
-    async def aa():
-        md = """# chatgit
-
-```python
-import uvicorn
-from invoke import task
-from invoke.context import Context
+    ).repo_chat(repo_url=schema.url.__str__(), github_token=schema.github_token)
+    return EventSourceResponse(content=(item.model_dump_json() async for item in stream))
 
 
-@task
-def clean(ctx: Context):
-    ctx.run("rm -rf dist/* build/*")
-    ctx.run('find . -type d -name "__pycache__" -exec rm -r {} +')
-
-
-@task(aliases=["s"])
-def server(_: Context):
-    uvicorn.run(
-        "server:app",
-        host="0.0.0.0",
-        port=8000,
-        log_level="debug",
-    )
-
-```
-
-### 哈哈
-        """
-        for i in md:
-            yield json.dumps({"content": i})
-    return EventSourceResponse(content=aa())
-
-
-@router.get("/health")
-async def health():
-    return {"status": "ok", "user_name": "sube"}
+@router.post("/completions")
+async def completions(schema: CompletionRequest):
+    repo, onwer = Github.parse_github_url(schema.messages[0].content)
+    schema.messages[0].content = """
+    You are a helpful assistant that answers questions about a GitHub repository.
+    The repository is {repo} owned by {owner}.
+    Please answer my question based on the conversation history and answer the question with Simplified Chinese.
+    """.format(repo=repo, owner=onwer)
+    stream = ChatService(
+        schema.model, api_key=schema.api_key, base_url=schema.base_url
+    ).chat(schema.messages)
+    return EventSourceResponse(content=(item.model_dump_json() async for item in stream))

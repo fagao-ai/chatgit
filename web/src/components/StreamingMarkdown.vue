@@ -29,7 +29,9 @@ import hljs from 'highlight.js'
 import Spinner from '@/components/Spinner.vue'
 import DOMPurify from 'dompurify'
 import { ref, watch, computed, nextTick, onMounted } from 'vue'
-// import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
+import 'highlight.js/styles/atom-one-dark.css'
+
+
 declare module 'marked' {
   interface MarkedOptions {
     highlight?: (code: string, lang: string) => string | Promise<string>
@@ -43,7 +45,6 @@ const props = defineProps<{
 
 // 配置marked渲染器
 const renderer = new marked.Renderer()
-const code_renderer = new marked.Renderer()
 // 自定义链接渲染
 renderer.link = ({ href, title, tokens }) => {
   return `<a href="${href}" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 underline">${tokens[0].raw}</a>`
@@ -80,7 +81,6 @@ renderer.code = ({ text: code, lang: language, escaped: isEscaped }) => {
 
 marked.setOptions({
   highlight: (code: any, lang: any) => {
-    debugger
     try {
       return hljs.highlight(code, { language: hljs.getLanguage(lang) ? lang : 'plaintext' }).value
     } catch (e) {
@@ -121,7 +121,7 @@ const handleCopy = (event: MouseEvent) => {
 const processMarkdown = (content: string) => {
   const rawHtml = marked(content)
   return DOMPurify.sanitize(rawHtml as string, {
-    ADD_TAGS: ['pre', 'code', 'button'],
+    ADD_TAGS: ['pre', 'code', 'button', 'br'],
     ADD_ATTR: ['class', 'onclick']
   })
 }
@@ -212,7 +212,23 @@ const renderedContent = computed(() => processedContent.value.length > 0)
   }
 }
 
+.markdown-body {
+  --color-fg-default: #c9d1d9;
+  --color-bg-primary: #0d1117;
+  --color-border-default: #30363d;
+  background: transparent !important;
+
+  ul {
+    list-style: circle;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+}
+
 .markdown-body pre {
+  background-color: rgba(110, 118, 129, 0.4) !important;
   @apply bg-gray-800 rounded-xl p-4 overflow-x-auto;
 }
 
@@ -225,29 +241,29 @@ const renderedContent = computed(() => processedContent.value.length > 0)
 }
 
 /* 代码高亮主题 */
-.hljs {
+/* .hljs {
   @apply bg-gray-800;
-}
+} */
 
-.hljs-keyword {
+/* .hljs-keyword {
   @apply text-purple-400;
-}
+} */
 
-.hljs-string {
+/* .hljs-string {
   @apply text-green-400;
-}
+} */
 
-.hljs-title {
+/* .hljs-title {
   @apply text-blue-400;
-}
+} */
 
-.hljs-built_in {
+/* .hljs-built_in {
   @apply text-blue-300;
-}
+} */
 
-.hljs-comment {
+/* .hljs-comment {
   @apply text-gray-500;
-}
+} */
 
 /* 流式段落动画 */
 .markdown-body p:last-child {

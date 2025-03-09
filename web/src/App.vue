@@ -89,7 +89,7 @@
           <input
             v-model="inputUrl"
             type="text"
-            placeholder="输入GitHub项目URL..."
+            :placeholder="currentChatHasMessages ? '请输入问题...' : '请输入GitHub项目URL...'"
             class="w-full pl-6 pr-24 py-4 bg-gray-900 text-gray-100 rounded-xl
                    border border-gray-700 focus:border-blue-500 focus:ring-2
                    focus:ring-blue-500 outline-none transition-all"
@@ -123,33 +123,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, unref } from 'vue'
 import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
-import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Spinner from '@/components/Spinner.vue'
-import { chatGithub, health } from '@/apis'
+import { chatGithub, chatCompletions } from '@/apis'
+import type { Chat } from '@/types'
+import { AIConfig, chatHistory } from '@/states'
 
-interface Chat {
-  id: string
-  title: string
-  date: string
-  messages: Message[]
-}
-
-interface Message {
-  content: string
-  isUser: boolean
-  timestamp: Date
-  streaming?: boolean
-}
-health()
 
 const isSidebarCollapsed = ref(false)
 const inputUrl = ref('')
 const isLoading = ref(false)
-const chatHistory = ref<Chat[]>([])
 const currentChatId = ref<string>('')
+
+const currentChatHasMessages = computed(() => {
+  const chat = chatHistory.value.find(c => c.id === currentChatId.value)
+  return chat ? chat.messages.length > 0 : false
+})
 
 const messages = computed(() => {
   const chat = chatHistory.value.find(c => c.id === currentChatId.value)
@@ -176,15 +167,17 @@ const selectChat = (id: string) => {
 }
 
 const handleSubmit = async () => {
+  // const config = unref(AIConfig)
+  // for (const key in config) {
+  //   if ((config as any)[key] === '') {
+
+  //   }
+  // }
+
   if (!inputUrl.value || isLoading.value) return
 
   try {
     isLoading.value = true
-    // 调用你的后端API
-    const stream = await chatGithub({
-      url: inputUrl.value,
-      model: 'gpt-4o',
-    })
 
     let content = ""
     if (!chatHistory.value.length) {
@@ -200,12 +193,24 @@ const handleSubmit = async () => {
       chat.title = '项目分析'
     }
     const lastMessage = chat?.messages[chat.messages.length - 1]
+
+    let stream
+    if (currentChatHasMessages.value) {
+      stream = await chatCompletions({
+        model: 'gpt-4o',
+        messages: chat!.messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
+      })
+    } else {
+      stream = await chatGithub({
+        url: inputUrl.value,
+        model: 'gpt-4o',
+      })
+    }
     for await (let event of stream) {
-      console.log('<<', event.data);
       try {
         const msg = JSON.parse(event.data ?? '')
-        content += msg.content
-        if (lastMessage) {
+        if (msg.content && lastMessage) {
+          content += msg.content
           lastMessage.content = content
           lastMessage.streaming = true
         }

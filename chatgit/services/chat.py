@@ -83,10 +83,8 @@ class ChatService:
             base_url = os.environ.get("OPENAI_API_BASE")
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3)
         self.model = model
-
-    async def chat(self, repo_url: str, github_token: str | None = None):
-        readme = await Github(token=github_token).get_readme(repo_url)
-        messages: list[ChatCompletionUserMessageParam] = [{"role": "user", "content": self.PROMPT.format(readme=readme)}]
+        
+    async def chat(self, messages: list[ChatCompletionUserMessageParam]):
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
@@ -97,3 +95,9 @@ class ChatService:
                 yield ChatMessageChunk(reasoning_content=chunk.choices[0].delta.reasoning_content) # type: ignore
             else: 
                 yield ChatMessageChunk(content=chunk.choices[0].delta.content, reasoning_content=None) # type: ignore
+
+    async def repo_chat(self, repo_url: str, github_token: str | None = None):
+        readme = await Github(token=github_token).get_readme(repo_url)
+        messages: list[ChatCompletionUserMessageParam] = [{"role": "user", "content": self.PROMPT.format(readme=readme)}]
+        async for item in self.chat(messages):
+            yield item
