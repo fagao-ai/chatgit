@@ -1,17 +1,23 @@
 import os
 from typing import ClassVar
 from openai import AsyncOpenAI
-from openai.types.chat.chat_completion_user_message_param import ChatCompletionUserMessageParam
+from openai.types.chat.chat_completion_user_message_param import (
+    ChatCompletionUserMessageParam,
+)
 from pydantic import BaseModel, Field
 
 from chatgit.services.github import Github
+
 
 class ChatMessageChunk(BaseModel):
     reasoning_content: str | None = Field(default=None)
     content: str | None = Field(default=None)
 
+
 class ChatService:
-    PROMPT: ClassVar[str] = """我已获得一个开源项目的README文档，但无法快速理解其核心价值。请根据以下结构分析并解释该项目，要求：
+    PROMPT: ClassVar[
+        str
+    ] = """我已获得一个开源项目的README文档，但无法快速理解其核心价值。请根据以下结构分析并解释该项目，要求：
 
 用非技术语言翻译技术概念
 
@@ -76,49 +82,74 @@ class ChatService:
 {readme}
 """
 
-    def __init__(self, model: str, *, api_key: str | None= None, base_url: str | None = None, timeout: int = 60):
+    def __init__(
+        self,
+        model: str,
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        timeout: int = 60,
+    ):
         if api_key is None:
             api_key = os.environ.get("OPENAI_API_KEY")
         if base_url is None:
             base_url = os.environ.get("OPENAI_API_BASE")
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3)
+        self.client = AsyncOpenAI(
+            api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3
+        )
         self.model = model
-        
+
     async def chat(self, messages: list[ChatCompletionUserMessageParam]):
         response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            stream=True
+            model=self.model, messages=messages, stream=True
         )
         async for chunk in response:
-            if hasattr(chunk.choices[0].delta, "reasoning_content"): # type: ignore
-                yield ChatMessageChunk(reasoning_content=chunk.choices[0].delta.reasoning_content) # type: ignore
-            else: 
-                yield ChatMessageChunk(content=chunk.choices[0].delta.content, reasoning_content=None) # type: ignore
+            if hasattr(chunk.choices[0].delta, "reasoning_content"):  # type: ignore
+                yield ChatMessageChunk(
+                    reasoning_content=chunk.choices[0].delta.reasoning_content
+                )  # type: ignore
+            else:
+                yield ChatMessageChunk(
+                    content=chunk.choices[0].delta.content, reasoning_content=None
+                )  # type: ignore
 
     async def repo_chat(self, repo_url: str, github_token: str | None = None):
         readme = await Github(token=github_token).get_readme(repo_url)
-        messages: list[ChatCompletionUserMessageParam] = [{"role": "user", "content": self.PROMPT.format(readme=readme)}]
+        messages: list[ChatCompletionUserMessageParam] = [
+            {"role": "user", "content": self.PROMPT.format(readme=readme)}
+        ]
         async for item in self.chat(messages):
             yield item
-            
-    async def get_title(self, messages: list[ChatCompletionUserMessageParam]):
+
+    async def get_title(
+        self, repo: str, messages: list[ChatCompletionUserMessageParam]
+    ):
         prompt = """基于对话历史,生成3-5字的标题,要求:
 1. 直击项目核心功能/最大亮点  
 2. 开头或结尾加1个精准匹配emoji  
 3. 禁用总结/分析等附加内容  
 4. 输出仅保留最终标题  
 5. 使用给定对话历史的语言
+6. 结合项目名称: {repo}
 
 对话历史:
 {memory}
 """
-        messages[0].content = f"请基于该项目的readme介绍一下该项目的优势, 仓库地址: {messages[0].content}"
+        messages[
+            0
+        ].content = (
+            f"请基于该项目的readme介绍一下该项目的优势, 仓库地址: {messages[0].content}"
+        )
         response = await self.client.chat.completions.create(
             model=self.model,
-            messages=[{"role": "user", "content": prompt.format(memory="\n".join((msg.content for msg in messages)))}],
-            stream=False
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt.format(
+                        repo=repo, memory="\n".join((msg.content for msg in messages))
+                    ),
+                }
+            ],
+            stream=False,
         )
         return response.choices[0].message.content
-        
-        

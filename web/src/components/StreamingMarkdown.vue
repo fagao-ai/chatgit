@@ -1,13 +1,7 @@
 <template>
   <div class="markdown-stream">
-    <div
-      v-if="streaming && !renderedContent"
-      class="flex items-center text-gray-400"
-    >
-      <Spinner
-        size="sm"
-        class="mr-2"
-      />
+    <div v-if="streaming && !renderedContent" class="flex items-center text-gray-400">
+      <Spinner size="sm" class="mr-2" />
       Analyzing...
     </div>
     <div
@@ -16,10 +10,7 @@
       v-html="processedContent"
       @click="handleCopy"
     ></div>
-    <div
-      v-if="streaming"
-      class="blinking-caret"
-    ></div>
+    <div v-if="streaming" class="blinking-caret"></div>
   </div>
 </template>
 
@@ -31,7 +22,6 @@ import DOMPurify from 'dompurify'
 import { useDebounceFn } from '@vueuse/core'
 import { ref, watch, computed, nextTick, onMounted } from 'vue'
 import 'highlight.js/styles/atom-one-dark.css'
-
 
 declare module 'marked' {
   interface MarkedOptions {
@@ -89,7 +79,7 @@ marked.setOptions({
   },
   breaks: true,
   gfm: true,
-  renderer
+  renderer,
 })
 
 // 响应式数据
@@ -105,7 +95,7 @@ const handleCopy = (event: MouseEvent) => {
   if (!target.classList.contains('copy-trigger')) return
 
   const container = target.closest('.code-block')
-  const code = container?.querySelector('code')?.textContent || ""
+  const code = container?.querySelector('code')?.textContent || ''
 
   navigator.clipboard.writeText(code).then(() => {
     const btn = container?.querySelector('.copy-btn')
@@ -116,42 +106,48 @@ const handleCopy = (event: MouseEvent) => {
   })
 }
 
-// Markdown处理 
+// Markdown处理
 const processMarkdown = (content: string) => {
   const rawHtml = marked(content)
   return DOMPurify.sanitize(rawHtml as string, {
     ADD_TAGS: ['pre', 'code', 'button', 'br'],
-    ADD_ATTR: ['class', 'onclick']
+    ADD_ATTR: ['class', 'onclick'],
   })
 }
 
 // 智能高亮更新
 const updateHighlight = () => {
   clearTimeout(highlightTimer)
-  highlightTimer = setTimeout(() => {
-    nextTick(() => {
-      markdownContent.value?.querySelectorAll('pre code').forEach((block) => {
-        if (!block.classList.contains('hljs')) {
-          hljs.highlightElement(block as HTMLElement)
-        }
+  highlightTimer = setTimeout(
+    () => {
+      nextTick(() => {
+        markdownContent.value?.querySelectorAll('pre code').forEach((block) => {
+          if (!block.classList.contains('hljs')) {
+            hljs.highlightElement(block as HTMLElement)
+          }
+        })
       })
-    })
-  }, props.streaming ? 300 : 0)
+    },
+    props.streaming ? 300 : 0,
+  )
 }
 
 // 内容监听
-watch(() => props.content, (newVal) => {
-  clearTimeout(updateTimer)
-  if (props.streaming) {
-    processedContent.value = processMarkdown(newVal)
-    updateHighlight()
-  } else {
-    updateTimer = setTimeout(() => {
+watch(
+  () => props.content,
+  (newVal) => {
+    clearTimeout(updateTimer)
+    if (props.streaming) {
       processedContent.value = processMarkdown(newVal)
       updateHighlight()
-    }, 200)
-  }
-})
+    } else {
+      updateTimer = setTimeout(() => {
+        processedContent.value = processMarkdown(newVal)
+        updateHighlight()
+      }, 200)
+    }
+  },
+)
 
 // 初始处理
 onMounted(() => {
@@ -197,14 +193,13 @@ const renderedContent = computed(() => processedContent.value.length > 0)
 }
 
 @keyframes blink {
-
   0%,
   100% {
-    opacity: 1
+    opacity: 1;
   }
 
   50% {
-    opacity: 0
+    opacity: 0;
   }
 }
 
