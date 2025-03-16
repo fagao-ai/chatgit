@@ -95,7 +95,6 @@ marked.setOptions({
 
 // 响应式数据
 const processedContent = ref('')
-const debouncedContent = ref('')
 const markdownContent = ref<HTMLElement | null>(null)
 let updateTimer: ReturnType<typeof setTimeout>
 let highlightTimer: ReturnType<typeof setTimeout>
@@ -143,15 +142,11 @@ const updateHighlight = () => {
 
 // 内容监听
 watch(() => props.content, (newVal) => {
-  clearTimeout(updateTimer)
-
   if (props.streaming) {
-    debouncedContent.value = newVal
     processedContent.value = processMarkdown(newVal)
     updateHighlight()
   } else {
-    updateTimer = setTimeout(() => {
-      debouncedContent.value = newVal
+    useDebounceFn(() => {
       processedContent.value = processMarkdown(newVal)
       updateHighlight()
     }, 200)
