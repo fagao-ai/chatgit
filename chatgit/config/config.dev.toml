@@ -1,8 +1,8 @@
 [database]
-host = "mysql"
-port = 3306
-username = "chatgit"
-password = "chatgit"
+host = "postgres"
+port = 5432
+username = "postgres"
+password = ""
 db_name = "chatgit"
 
 [qdrant]

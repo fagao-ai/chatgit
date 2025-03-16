@@ -7,7 +7,7 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from chatgit.common import config as project_config
+from chatgit.common.config import DB_NAME, DB_HOST, DB_PASSWORD, DB_PORT, DB_USERNAME
 
 # 修改默认路径为上级路径
 sys.path.append(str(Path(__file__).parent.parent))
@@ -33,9 +33,9 @@ target_metadata = None
 # ... etc.
 
 # dburl = context.get_x_argument(as_dictionary=True).get("dburl")
-db_config = project_config.database
-db_password = f"{db_config.password}" if db_config.password else ""
-db_url = f"mysql+pymysql://{db_config.username}:{db_password}@{db_config.host}:{db_config.port}/{db_config.db_name}"
+db_url = (
+    f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 
 def run_migrations_offline() -> None:

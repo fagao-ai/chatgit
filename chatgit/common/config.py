@@ -1,51 +1,53 @@
 import os
+# from pydantic.main import BaseModel
 
-from pydantic.main import BaseModel
-
-from chatgit.common import PROJECT_PATH
-from chatgit.common.my_base_settings import MyBaseSettings
-
-
-class Database(BaseModel):
-    host: str
-    port: int
-    username: str
-    password: str
-    db_name: str
+# from chatgit.common import PROJECT_PATH
+# from chatgit.common.my_base_settings import MyBaseSettings
 
 
-class QdrantConnection(BaseModel):
-    url: str | None = None
-    host: str | None = None
-    port: int | None = None
-    memory: bool | None = False
+# class Database(BaseModel):
+#     host: str
+#     port: int
+#     username: str
+#     password: str
+#     db_name: str
 
 
-class CrawlConfig(BaseModel):
-    start_page: int
-    proxy_limit: int
+# class QdrantConnection(BaseModel):
+#     url: str | None = None
+#     host: str | None = None
+#     port: int | None = None
+#     memory: bool | None = False
 
 
-class Config(MyBaseSettings):
-    database: Database
-    qdrant: QdrantConnection = QdrantConnection()
-    crawl: CrawlConfig
-
-    class Config:
-        env_file = PROJECT_PATH / "chatgit/config/config.dev.toml"
+# class CrawlConfig(BaseModel):
+#     start_page: int
+#     proxy_limit: int
 
 
-CONFIG_DIR = PROJECT_PATH / "chatgit/config"
+# class Config(MyBaseSettings):
+#     database: Database
+#     qdrant: QdrantConnection = QdrantConnection()
+#     crawl: CrawlConfig
 
-ENV = os.getenv("ENV", "prod")
+#     class Config:
+#         env_file = PROJECT_PATH / "chatgit/config/config.dev.toml"
 
-if ENV == "dev":
-    Config.Config.env_file = CONFIG_DIR / "config.dev.toml"
-elif ENV == "prod":
-    Config.Config.env_file = CONFIG_DIR / "config.prod.toml"
 
-config = Config()
+# CONFIG_DIR = PROJECT_PATH / "chatgit/config"
 
-db_url = (
-    f"mysql://{config.database.username}:{config.database.password}@{config.database.host}:{config.database.port}/{config.database.db_name}?charset=utf8mb4"
-)
+# ENV = os.getenv("ENV", "prod")
+
+# if ENV == "dev":
+#     Config.Config.env_file = CONFIG_DIR / "config.dev.toml"
+# elif ENV == "prod":
+#     Config.Config.env_file = CONFIG_DIR / "config.prod.toml"
+
+# config = Config()
+DB_ENABLE = os.getenv("CHATGIT_DB_ENABLE", "False")
+DB_USERNAME = os.getenv("CHATGIT_DB_USERNAME", "postgres")
+DB_PASSWORD = os.getenv("CHATGIT_DB_PASSWORD", "")
+DB_HOST = os.getenv("CHATGIT_DB_HOST", "localhost")
+DB_PORT = os.getenv("CHATGIT_DB_PORT", "5432")
+DB_NAME = os.getenv("CHATGIT_DB_NAME", "chatgit")
+db_url = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

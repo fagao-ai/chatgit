@@ -2,20 +2,22 @@ from datetime import datetime
 
 import databases
 import sqlalchemy
-from ormar import DateTime, Integer, ModelMeta
+from ormar import DateTime, Integer, Model
+from ormar.models.ormar_config import OrmarConfig
 
 from chatgit.common import db_url
 
-database = databases.Database(db_url)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(db_url),
+)
+
+database = base_ormar_config.database
 
 
-class BaseMeta(ModelMeta):
-    metadata = metadata
-    database = database
+class BaseModel(Model):
+    ormar_config = base_ormar_config.copy()
 
-
-class BaseModelMixins:
     id: int = Integer(primary_key=True, autoincrement=True)
     created_at: datetime = DateTime(default=datetime.now())
     updated_at: datetime = DateTime(default=datetime.now())

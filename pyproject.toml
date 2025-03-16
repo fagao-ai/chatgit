@@ -5,9 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "alembic>=1.15.1",
     "fastapi[standard]>=0.115.11",
     "httpx>=0.28.1",
+    "invoke>=2.2.0",
+    "loguru>=0.7.3",
     "openai>=1.65.4",
+    "ormar>=0.20.2",
+    "psycopg2>=2.9.10",
     "sse-starlette>=2.2.1",
 ]
 

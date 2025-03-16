@@ -1,15 +1,34 @@
+from contextlib import asynccontextmanager
 import time
-from typing import Callable
+from typing import AsyncIterator, Callable
 
 from fastapi import FastAPI, Request, Response
 
 from chatgit.backend.views import app_router
+from chatgit.models import base_ormar_config
 
-app = FastAPI(docs_url="/api/v1/docs")
+
+def get_lifespan(config):
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if not config.database.is_connected:
+            await config.database.connect()
+
+        yield
+
+        if config.database.is_connected:
+            await config.database.disconnect()
+
+    return lifespan
+
+
+app = FastAPI(docs_url="/api/v1/docs", lifespan=get_lifespan(base_ormar_config))
 
 
 @app.middleware("http")  # type: ignore
-async def add_process_time_header(request: Request, call_next: Callable[[Request], Response]) -> Response:
+async def add_process_time_header(
+    request: Request, call_next: Callable[[Request], Response]
+) -> Response:
     start_time = time.perf_counter()
     response: Response = await call_next(request)
     process_time = time.perf_counter() - start_time
