@@ -89,7 +89,7 @@
           <input
             v-model="inputUrl"
             type="text"
-            :placeholder="currentChatHasMessages ? '请输入问题...' : '请输入GitHub项目URL...'"
+            :placeholder="currentChat?.hasMessage ? '请输入问题...' : '请输入GitHub项目URL...'"
             class="w-full pl-6 pr-24 py-4 bg-gray-900 text-gray-100 rounded-xl
                    border border-gray-700 focus:border-blue-500 focus:ring-2
                    focus:ring-blue-500 outline-none transition-all"
@@ -137,9 +137,9 @@ const inputUrl = ref('')
 const isLoading = ref(false)
 const currentChatId = ref<string>('')
 
-const currentChatHasMessages = computed(() => {
+const currentChat = computed(() => {
   const chat = chatHistory.value.find(c => c.id === currentChatId.value)
-  return chat ? chat.messages.length > 0 : false
+  return chat
 })
 
 const messages = computed(() => {
@@ -156,10 +156,12 @@ const startNewChat = () => {
     id: Date.now().toString(),
     title: '新对话',
     date: new Date().toLocaleDateString(),
-    messages: []
+    messages: [],
+    hasMessage: false,
   }
   chatHistory.value.unshift(newChat)
   currentChatId.value = newChat.id
+  return newChat
 }
 
 const selectChat = (id: string) => {
@@ -180,25 +182,21 @@ const handleSubmit = async () => {
     isLoading.value = true
 
     let content = ""
-    if (!chatHistory.value.length) {
+    if (!chatHistory.value.length || chatHistory.value.find(c => c.id === currentChatId.value) === void 0) {
       startNewChat()
     }
-    // 添加到当前对话
-    const chat = chatHistory.value.find(c => c.id === currentChatId.value)
-    if (chat) {
-      chat.messages.push(
-        { content: inputUrl.value, isUser: true, timestamp: new Date() },
-        { content: content, isUser: false, timestamp: new Date(), streaming: true }
-      )
-      chat.title = '项目分析'
-    }
-    const lastMessage = chat?.messages[chat.messages.length - 1]
+
+    currentChat.value!.messages.push(
+      { content: inputUrl.value, isUser: true, timestamp: new Date() },
+      { content: content, isUser: false, timestamp: new Date(), streaming: true }
+    )
+    const lastMessage = currentChat.value!.messages[currentChat.value!.messages.length - 1]
 
     let stream
-    if (currentChatHasMessages.value) {
+    if (currentChat.value!.hasMessage) {
       stream = await chatCompletions({
         model: 'gpt-4o',
-        messages: chat!.messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
+        messages: currentChat.value!.messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
       })
     } else {
       stream = await chatGithub({
@@ -206,10 +204,13 @@ const handleSubmit = async () => {
         model: 'gpt-4o',
       })
     }
+    if (!stream) {
+      return
+    }
     for await (let event of stream) {
       try {
         const msg = JSON.parse(event.data ?? '')
-        if (msg.content && lastMessage) {
+        if (msg.content) {
           content += msg.content
           lastMessage.content = content
           lastMessage.streaming = true
@@ -218,10 +219,8 @@ const handleSubmit = async () => {
 
       }
     }
-
-    if (lastMessage) {
-      lastMessage.streaming = false
-    }
+    currentChat.value!.hasMessage = true
+    lastMessage.streaming = false
 
     inputUrl.value = ''
   } finally {

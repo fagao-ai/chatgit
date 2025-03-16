@@ -17,6 +17,7 @@ export interface Chat {
     title: string
     date: string
     messages: Message[]
+    hasMessage: boolean
 }
 
 export interface Message {
