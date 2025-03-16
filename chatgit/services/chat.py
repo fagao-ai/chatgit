@@ -101,3 +101,24 @@ class ChatService:
         messages: list[ChatCompletionUserMessageParam] = [{"role": "user", "content": self.PROMPT.format(readme=readme)}]
         async for item in self.chat(messages):
             yield item
+            
+    async def get_title(self, messages: list[ChatCompletionUserMessageParam]):
+        prompt = """基于对话历史,生成3-5字的标题,要求:
+1. 直击项目核心功能/最大亮点  
+2. 开头或结尾加1个精准匹配emoji  
+3. 禁用总结/分析等附加内容  
+4. 输出仅保留最终标题  
+5. 使用给定对话历史的语言
+
+对话历史:
+{memory}
+"""
+        messages[0].content = f"请基于该项目的readme介绍一下该项目的优势, 仓库地址: {messages[0].content}"
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt.format(memory="\n".join((msg.content for msg in messages)))}],
+            stream=False
+        )
+        return response.choices[0].message.content
+        
+        

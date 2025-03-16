@@ -23,7 +23,7 @@
             :class="['p-3 cursor-pointer hover:bg-gray-700 transition-colors',
               currentChatId === chat.id ? 'bg-gray-700 border-l-4 border-blue-500' : '']"
           >
-            <div class="text-gray-300 text-sm truncate">{{ chat.title }}</div>
+            <div class="text-gray-300 text-sm truncate">{{ chat.title || "新对话" }}</div>
             <div class="text-gray-500 text-xs mt-1">{{ chat.date }}</div>
           </div>
         </div>
@@ -123,11 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch, unref } from 'vue'
+import { ref, computed, nextTick, watch, unref, type Ref } from 'vue'
 import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Spinner from '@/components/Spinner.vue'
-import { chatGithub, chatCompletions } from '@/apis'
+import { chatGithub, chatCompletions, getTitle } from '@/apis'
 import type { Chat } from '@/types'
 import { AIConfig, chatHistory } from '@/states'
 
@@ -154,7 +154,7 @@ const toggleSidebar = () => {
 const startNewChat = () => {
   const newChat: Chat = {
     id: Date.now().toString(),
-    title: '新对话',
+    title: '',
     date: new Date().toLocaleDateString(),
     messages: [],
     hasMessage: false,
@@ -166,6 +166,22 @@ const startNewChat = () => {
 
 const selectChat = (id: string) => {
   currentChatId.value = id
+}
+
+function fakeStream(text: string, setFn: (char: string) => void, speed?: number) {
+  let index = 0;
+  if (speed === void 0) {
+    speed = Math.floor(Math.random() * 100) + 1
+  }
+
+  const timer = setInterval(() => {
+    if (index < text.length) {
+      setFn(text.charAt(index));
+      index++;
+    } else {
+      clearInterval(timer);
+    }
+  }, speed);
 }
 
 const handleSubmit = async () => {
@@ -222,6 +238,17 @@ const handleSubmit = async () => {
     currentChat.value!.hasMessage = true
     lastMessage.streaming = false
 
+    if (!currentChat.value!.title) {
+      const res = await getTitle({
+        model: 'gpt-4o',
+        messages: currentChat.value!.messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
+      })
+      if (res.title) {
+        fakeStream(res.title, (char) => {
+          currentChat.value!.title += char
+        })
+      }
+    }
     inputUrl.value = ''
   } finally {
     isLoading.value = false

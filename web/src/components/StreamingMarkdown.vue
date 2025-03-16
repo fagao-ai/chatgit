@@ -56,7 +56,6 @@ renderer.code = ({ text: code, lang: language, escaped: isEscaped }) => {
   const validLang = language && hljs.getLanguage(language) ? language : 'plaintext'
   const langClass = validLang === 'plaintext' ? '' : `language-${validLang}`
 
-  console.log(`code: ${code}`)
   return `
     <div class="code-block relative group">
       <div class="code-toolbar flex gap-2 absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -142,11 +141,12 @@ const updateHighlight = () => {
 
 // 内容监听
 watch(() => props.content, (newVal) => {
+  clearTimeout(updateTimer)
   if (props.streaming) {
     processedContent.value = processMarkdown(newVal)
     updateHighlight()
   } else {
-    useDebounceFn(() => {
+    updateTimer = setTimeout(() => {
       processedContent.value = processMarkdown(newVal)
       updateHighlight()
     }, 200)

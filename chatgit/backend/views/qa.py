@@ -16,7 +16,9 @@ async def chat_git_repo(schema: GithubRequest):
     stream = ChatService(
         schema.model, api_key=schema.api_key, base_url=schema.base_url
     ).repo_chat(repo_url=schema.url.__str__(), github_token=schema.github_token)
-    return EventSourceResponse(content=(item.model_dump_json() async for item in stream))
+    return EventSourceResponse(
+        content=(item.model_dump_json() async for item in stream)
+    )
 
 
 @router.post("/completions")
@@ -30,4 +32,15 @@ async def completions(schema: CompletionRequest):
     stream = ChatService(
         schema.model, api_key=schema.api_key, base_url=schema.base_url
     ).chat(schema.messages)
-    return EventSourceResponse(content=(item.model_dump_json() async for item in stream))
+    return EventSourceResponse(
+        content=(item.model_dump_json() async for item in stream)
+    )
+
+
+@router.post("/title")
+async def generate_title(schema: CompletionRequest):
+    return {
+        "title": await ChatService(
+            schema.model, api_key=schema.api_key, base_url=schema.base_url
+        ).get_title(schema.messages),
+    }
