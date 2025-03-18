@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict, Self
+from typing import Any, Dict, Self
 
 import ormar
 
@@ -11,15 +11,15 @@ class RepoSource(StrEnum):
 
 
 class Organization(BaseModel):
-    ormar_config = base_ormar_config.copy(tablename="organization")
+    ormar_config = base_ormar_config.copy(tablename="organization")  # type: ignore
 
-    org_id: Annotated[int, ormar.Integer()]
+    org_id: int = ormar.Integer()
     name: str = ormar.String(max_length=200)
     meta: dict[str, Any] = ormar.JSON()
 
 
 class Repository(BaseModel):
-    ormar_config = base_ormar_config.copy(tablename="repository")
+    ormar_config = base_ormar_config.copy(tablename="repository")  # type: ignore
 
     repo_id: int = ormar.Integer()
     name: str = ormar.String(max_length=200)
@@ -75,6 +75,15 @@ class Repository(BaseModel):
         return repo
 
 
-# class Topic(BaseModel):
-#     repo: Repository | None = ormar.ForeignKey(Repository)
-#     name: str = ormar.String(max_length=200, nullable=False)
+class Topic(BaseModel):
+    ormar_config = base_ormar_config.copy(tablename="topic")  # type: ignore
+
+    repo: Repository | None = ormar.ForeignKey(Repository)
+    name: str = ormar.String(max_length=200, nullable=False)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    org = Organization(org_id=1, name="sube", meta={"test": "test"})
+    asyncio.new_event_loop().run_until_complete(org.save())

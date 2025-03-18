@@ -43,11 +43,20 @@ app.include_router(app_router)
 
 
 if __name__ == "__main__":
-    import uvicorn
+    # uvicorn.run(
+    #     "server:app",
+    #     host="0.0.0.0",
+    #     reload=False,
+    #     log_level="debug",
+    # )
+    import asyncio
+    from chatgit.models.repositories import Organization
 
-    uvicorn.run(
-        "server:app",
-        host="0.0.0.0",
-        reload=False,
-        log_level="debug",
-    )
+    async def with_connect(function):
+        # note that for any other backend than sqlite you actually need to
+        # connect to the database to perform db operations
+        async with base_ormar_config.database:
+            await function()
+
+    org = Organization(org_id=1, name="sube", meta={"test": "test"})
+    asyncio.new_event_loop().run_until_complete(with_connect(org.save))

@@ -19,3 +19,8 @@ dependencies = [
 
 [[tool.uv.index]]
 url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+[dependency-groups]
+dev = [
+    "types-sqlalchemy>=1.4.53.38",
+]
