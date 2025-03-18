@@ -1,9 +1,9 @@
-from typing import Any, Dict, Self
+from typing import Annotated, Any, Dict, Self
 
 import ormar
 
 from chatgit.common import StrEnum
-from chatgit.models import BaseModel, database
+from chatgit.models import BaseModel, database, base_ormar_config
 
 
 class RepoSource(StrEnum):
@@ -11,12 +11,16 @@ class RepoSource(StrEnum):
 
 
 class Organization(BaseModel):
-    org_id: int = ormar.Integer()
+    ormar_config = base_ormar_config.copy(tablename="organization")
+
+    org_id: Annotated[int, ormar.Integer()]
     name: str = ormar.String(max_length=200)
     meta: dict[str, Any] = ormar.JSON()
 
 
 class Repository(BaseModel):
+    ormar_config = base_ormar_config.copy(tablename="repository")
+
     repo_id: int = ormar.Integer()
     name: str = ormar.String(max_length=200)
     full_name: str = ormar.String(max_length=200)
@@ -71,6 +75,6 @@ class Repository(BaseModel):
         return repo
 
 
-class Topic(BaseModel):
-    repo: Repository = ormar.ForeignKey(Repository)
-    name: str = ormar.String(max_length=200)
+# class Topic(BaseModel):
+#     repo: Repository | None = ormar.ForeignKey(Repository)
+#     name: str = ormar.String(max_length=200, nullable=False)

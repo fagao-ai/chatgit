@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 
 import databases
 import sqlalchemy
@@ -16,8 +17,8 @@ database = base_ormar_config.database
 
 
 class BaseModel(Model):
-    ormar_config = base_ormar_config.copy()
+    ormar_config = base_ormar_config.copy(abstract=True)
 
-    id: int = Integer(primary_key=True, autoincrement=True)
+    id: Annotated[int, Integer(primary_key=True, autoincrement=True)]
     created_at: datetime = DateTime(default=datetime.now())
     updated_at: datetime = DateTime(default=datetime.now())
