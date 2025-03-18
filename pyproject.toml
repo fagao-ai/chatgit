@@ -12,7 +12,7 @@ dependencies = [
     "loguru>=0.7.3",
     "openai>=1.65.4",
     "ormar>=0.20.2",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "sse-starlette>=2.2.1",
 ]
 
