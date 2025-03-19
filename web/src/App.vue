@@ -21,12 +21,29 @@
             :key="chat.id"
             @click="selectChat(chat.id)"
             :class="[
-              'p-3 cursor-pointer hover:bg-gray-700 transition-colors',
-              currentChatId === chat.id ? 'bg-gray-700 border-l-4 border-blue-500' : '',
+              'group relative p-3 cursor-pointer transition-colors',
+              currentChatId === chat.id
+                ? 'bg-gray-700 border-l-4 border-blue-500'
+                : 'hover:bg-gray-600',
             ]"
           >
             <div class="text-gray-300 text-sm truncate">{{ chat.title || '新对话' }}</div>
             <div class="text-gray-500 text-xs mt-1">{{ chat.date }}</div>
+            <button
+              class="absolute right-2 top-1/3 w-6 h-6 rounded-lg hover:bg-gray-800 flex items-center justify-center text-gray-400"
+              :class="
+                currentChatId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              "
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M3 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0m7 0a2 2 0 1 1 4 0 2 2 0 0 1-4 0m7 0a2 2 0 1 1 4 0 2 2 0 0 1-4 0"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
