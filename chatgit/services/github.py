@@ -1,7 +1,7 @@
 import os
 import base64
 import re
-from typing import ClassVar, Tuple
+from typing import Any, ClassVar, Tuple
 from httpx import AsyncClient
 
 from chatgit.common.config import DB_ENABLE
@@ -40,13 +40,12 @@ class Github:
 
             content = response.json()["content"]
             content = base64.b64decode(content).decode("utf-8")
-            if DB_ENABLE:
-                await Repository.from_github(
-                    readme=content, repo_info=await self.get_repo_info(repo_url)
-                )
+            if DB_ENABLE and content:
+                repo_info = await self.get_repo_info(repo_url)
+                await Repository.from_github(readme=content, repo_info=repo_info)
             return content
 
-    async def get_repo_info(self, repo_url: str) -> dict:
+    async def get_repo_info(self, repo_url: str) -> dict[str, Any]:
         owner, repo = self.parse_github_url(repo_url)
 
         async with AsyncClient(base_url=self.url, headers=self.headers) as client:

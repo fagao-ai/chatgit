@@ -32,6 +32,7 @@ class Repository(BaseModel):
     language: str | None = ormar.String(max_length=20, nullable=True)
     has_wiki: bool = ormar.Boolean(default=True)
     forks_count: int = ormar.Integer(default=0)
+    stargazers_count: int = ormar.Integer(default=0)
     license: Dict[str, Any] = ormar.JSON(nullable=True)
     readme_content: str | None = ormar.Text(nullable=True)
     # readme_name: str = ormar.String(max_length=200)
@@ -40,36 +41,41 @@ class Repository(BaseModel):
         enum_class=RepoSource, default=RepoSource.GITHUB
     )
 
-    @database.transaction()
     @classmethod
+    @database.transaction()
     async def from_github(
         cls,
         repo_info: dict[str, Any],
         readme: str | None = None,
     ) -> Self:
         if org := repo_info.get("organization"):
-            org = Organization(org_id=org["id"], name=org["login"], meta=org)
+            org, _ = await Organization.objects.get_or_create(
+                org_id=org["id"], _defaults={"name": org["login"]}
+            )
 
-        repo = cls(
+        repo, created = await cls.objects.get_or_create(
             repo_id=repo_info["id"],
-            name=repo_info["name"],
-            full_name=repo_info["full_name"],
-            description=repo_info["description"],
-            language=repo_info.get("language"),
-            has_wiki=repo_info["has_wiki"],
-            forks_count=repo_info["forks_count"],
-            license=repo_info.get("license"),
-            readme_content=readme,
-            homepage=repo_info.get("homepage"),
-            meta=repo_info,
-            organization=org,
+            _defaults={
+                "name": repo_info["name"],
+                "full_name": repo_info["full_name"],
+                "description": repo_info["description"],
+                "language": repo_info.get("language"),
+                "has_wiki": repo_info["has_wiki"],
+                "forks_count": repo_info["forks_count"],
+                "license": repo_info.get("license"),
+                "readme_content": readme,
+                "homepage": repo_info.get("homepage"),
+                "meta": repo_info,
+                "organization": org,
+                "stargazers_count": repo_info["stargazers_count"],
+            },
         )
-
-        await repo.save_related(follow=True, save_all=True)
+        if not created:
+            return repo
 
         if topics := repo_info.get("topics"):
             await Topic.objects.bulk_create(
-                [Topic(repo_id=repo.id, name=topic) for topic in topics]
+                [Topic(repo=repo, name=topic) for topic in topics]
             )
 
         return repo

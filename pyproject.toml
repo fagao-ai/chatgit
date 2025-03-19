@@ -3,11 +3,12 @@ name = "chatgit"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.15.1",
     "asyncpg>=0.30.0",
     "fastapi[standard]>=0.115.11",
+    "granian[reload]>=2.1.0",
     "httpx>=0.28.1",
     "invoke>=2.2.0",
     "loguru>=0.7.3",
