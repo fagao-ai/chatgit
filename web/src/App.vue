@@ -6,10 +6,10 @@
         v-if="!isSidebarCollapsed"
         class="h-full w-64 bg-gray-800 border-r border-gray-700 flex flex-col"
       >
-        <div class="p-4 border-b border-gray-700">
+        <div class="p-3 border-b border-gray-700">
           <button
             @click="startNewChat"
-            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 text-white px-4 py-3 rounded-lg transition-all"
+            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 text-white px-3 py-2 rounded-lg transition-all"
           >
             新建对话
           </button>
