@@ -2,10 +2,8 @@
   <div class="h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex">
     <!-- 侧边栏 -->
     <transition name="slide">
-      <div
-        v-if="!isSidebarCollapsed"
-        class="h-full w-64 bg-gray-800 border-r border-gray-700 flex flex-col"
-      >
+      <div v-if="!isSidebarCollapsed" class="h-full w-64 bg-gray-900 flex flex-col">
+        <Logo class="cursor-pointer" @click="currentChatId = ''" />
         <div class="p-3">
           <button
             @click="startNewChat"
@@ -92,13 +90,16 @@
       ]"
     >
       <!-- 顶部栏 -->
-      <div class="min-h-[65px] bg-gray-800 flex items-center px-4 border-b border-gray-700">
+      <div class="min-h-[65px] bg-gray-800 flex items-center px-4">
         <button
           @click="toggleSidebar"
           class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors"
         >
           <Bars3Icon class="w-6 h-6" />
         </button>
+        <div class="flex-1 text-center text-lg font-medium text-gray-100">
+          {{ currentChat?.title }}
+        </div>
       </div>
       <div class="flex-1 relative">
         <div ref="messagesContainer" class="absolute inset-0 overflow-y-auto p-4 space-y-4">
@@ -125,11 +126,12 @@
       <div
         :class="[
           !currentChatHasMessage
-            ? 'h-full flex items-center justify-center pb-20' // 无对话时居中
+            ? 'h-full flex flex-col items-center justify-center pb-20' // 无对话时居中
             : 'border-gray-700 pb-6', // 有对话时底部样式
         ]"
-        class="px-4 bg-gray-800 transition-all duration-500"
+        class="px-4 bg-gray-800 transition-all duration-500 gap-2"
       >
+        <div class="flex text-sm">只需一个 URL,30 秒掌握项目精髓，快来和我聊聊吧(*^▽^*)</div>
         <form
           @submit.prevent="handleSubmit"
           class="flex gap-2 mx-auto items-end"
@@ -191,6 +193,7 @@ import type { ConfirmationOptions } from 'primevue/confirmationoptions'
 import { useToast } from 'primevue/usetoast'
 import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
+import Logo from '@/components/Logo.vue'
 import Spinner from '@/components/Spinner.vue'
 import { chatGithub, chatCompletions, getTitle } from '@/apis'
 import type { Chat } from '@/types'
