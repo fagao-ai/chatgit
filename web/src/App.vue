@@ -6,7 +6,7 @@
         v-if="!isSidebarCollapsed"
         class="h-full w-64 bg-gray-800 border-r border-gray-700 flex flex-col"
       >
-        <div class="p-3 border-b border-gray-700">
+        <div class="p-3">
           <button
             @click="startNewChat"
             class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 text-white px-3 py-2 rounded-lg transition-all"
@@ -27,13 +27,32 @@
                 : 'hover:bg-gray-600',
             ]"
           >
-            <div class="text-gray-300 text-sm truncate">{{ chat.title || '新对话' }}</div>
+            <div v-if="!chat.titleEdit" class="text-gray-300 text-sm truncate">
+              {{ chat.title || '新对话' }}
+            </div>
+            <template v-else>
+              <OnClickOutside @trigger="chat.titleEdit = false">
+                <InputText
+                  v-focus
+                  :minlength="1"
+                  type="text"
+                  size="small"
+                  v-model="chat.title"
+                  @blur="chat.titleEdit = false"
+                  @keyup.enter="chat.titleEdit = false"
+                  class="w-full"
+                  @click.stop
+                />
+              </OnClickOutside>
+            </template>
             <div class="text-gray-500 text-xs mt-1">{{ chat.date }}</div>
             <button
+              v-show="!chat.titleEdit"
               class="absolute right-2 top-1/3 w-6 h-6 rounded-lg hover:bg-gray-800 flex items-center justify-center text-gray-400"
               :class="
                 currentChatId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               "
+              @click="(e) => toggle(e, chat.id)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <path
@@ -45,6 +64,22 @@
               </svg>
             </button>
           </div>
+          <Popover ref="chatOperator">
+            <div class="flex flex-col">
+              <ul class="list-none p-0 m-0 flex flex-col">
+                <li
+                  v-for="member in members"
+                  :key="member.name"
+                  class="flex items-center gap-2 px-2 py-3 hover:bg-emphasis cursor-pointer rounded-border"
+                  @click="selectMember(member)"
+                >
+                  <div>
+                    <span class="font-medium">{{ member.name }}</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </Popover>
         </div>
       </div>
     </transition>
@@ -139,11 +174,21 @@
     >
       <PlusIcon class="w-6 h-6 text-white" />
     </button>
+    <ConfirmDialog group="positioned"></ConfirmDialog>
+    <Toast />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue'
+import { OnClickOutside } from '@vueuse/components'
+import Popover from 'primevue/popover'
+import Toast from 'primevue/toast'
+import InputText from 'primevue/inputtext'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useConfirm } from 'primevue/useconfirm'
+import type { ConfirmationOptions } from 'primevue/confirmationoptions'
+import { useToast } from 'primevue/usetoast'
 import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Spinner from '@/components/Spinner.vue'
@@ -151,6 +196,8 @@ import { chatGithub, chatCompletions, getTitle } from '@/apis'
 import type { Chat } from '@/types'
 import { AIConfig, chatHistory } from '@/states'
 
+const confirm = useConfirm()
+const toast = useToast()
 const isSidebarCollapsed = ref(false)
 const inputUrl = ref('')
 const isLoading = ref(false)
@@ -182,6 +229,7 @@ const startNewChat = () => {
     date: new Date().toLocaleDateString(),
     messages: [],
     hasMessage: false,
+    titleEdit: false,
   }
   chatHistory.value.unshift(newChat)
   currentChatId.value = newChat.id
@@ -322,6 +370,66 @@ const vAutoResize = {
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   },
+}
+
+const confirmDeleteChat = (position: ConfirmationOptions['position'], chatId: string) => {
+  confirm.require({
+    group: 'positioned',
+    message: '删除后无法恢复,确认删除吗?',
+    header: '永久删除对话',
+    icon: 'pi pi-info-circle',
+    position: position,
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+    },
+    acceptProps: {
+      label: '删除',
+      severity: 'danger',
+    },
+    accept: () => {
+      const findChatIndex = chatHistory.value.findIndex((c) => c.id === chatId)
+      if (findChatIndex === -1) return
+      chatHistory.value.splice(findChatIndex, 1)
+      toast.add({ severity: 'success', summary: 'Confirmed', detail: '删除成功', life: 3000 })
+    },
+    reject: () => {},
+  })
+}
+const chatOperator = ref<InstanceType<typeof Popover>>()
+const members = ref([
+  {
+    name: '重命名',
+    type: 'normal' as const,
+    fn: (chatId: string) => {
+      const chat = chatHistory.value.find((c) => c.id === chatId)
+      if (!chat) return
+      if (!chat.title) {
+        chat.title = '新对话'
+      }
+      chat.titleEdit = true
+    },
+  },
+  {
+    name: '删除',
+    type: 'danger' as const,
+    fn: (chatId: string) => {
+      confirmDeleteChat('left', chatId)
+    },
+  },
+])
+
+let chatOperatorId: string | null = null
+
+const toggle = (event: MouseEvent, chatId: string) => {
+  event.stopPropagation()
+  chatOperator.value?.toggle(event)
+  chatOperatorId = chatId
+}
+
+const selectMember = (member: (typeof members.value)[number]) => {
+  chatOperator.value?.hide()
+  member.fn(chatOperatorId!)
 }
 </script>
 

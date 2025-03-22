@@ -18,6 +18,7 @@ export interface Chat {
     date: string
     messages: Message[]
     hasMessage: boolean
+    titleEdit: boolean
 }
 
 export interface Message {
