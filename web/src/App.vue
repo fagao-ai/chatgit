@@ -135,7 +135,7 @@
     <!-- 悬浮按钮 -->
     <button
       @click="startNewChat"
-      class="fixed bottom-8 right-8 bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full shadow-xl hover:scale-105 transition-transform"
+      class="fixed bottom-20 right-4 bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full shadow-xl hover:scale-105 transition-transform"
     >
       <PlusIcon class="w-6 h-6 text-white" />
     </button>
