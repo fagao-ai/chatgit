@@ -1,8 +1,11 @@
 <template>
-  <div class="h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex">
+  <div class="h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex relative">
     <!-- 侧边栏 -->
     <transition name="slide">
-      <div v-if="!isSidebarCollapsed" class="h-full w-64 bg-gray-900 flex flex-col">
+      <div
+        v-if="!isSidebarCollapsed"
+        class="h-full w-64 bg-gray-900 flex flex-col absolute left-0 top-0 bottom-0"
+      >
         <Logo class="cursor-pointer" @click="currentChatId = ''" />
         <div class="p-3">
           <button
@@ -85,8 +88,9 @@
     <!-- 主内容区 -->
     <div
       :class="[
-        'flex flex-col bg-gray-800 transition-all duration-300 flex-1',
+        'flex flex-col bg-gray-800 transition-[margin] duration-300 ease-in-out flex-1',
         !currentChatHasMessage ? 'justify-center' : 'justify-end',
+        isSidebarCollapsed ? '' : 'ml-64',
       ]"
     >
       <!-- 顶部栏 -->
@@ -100,6 +104,13 @@
         <div class="flex-1 text-center text-lg font-medium text-gray-100">
           {{ currentChat?.title }}
         </div>
+        <a
+          target="_blank"
+          href="https://github.com/fagao-ai/chatgit"
+          class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors ml-2"
+        >
+          <i class="pi pi-github"></i>
+        </a>
       </div>
       <div class="flex-1 relative">
         <div ref="messagesContainer" class="absolute inset-0 overflow-y-auto p-4 space-y-4">
@@ -131,7 +142,10 @@
         ]"
         class="px-4 bg-gray-800 transition-all duration-500 gap-2"
       >
-        <div class="flex text-sm">只需一个 URL,30 秒掌握项目精髓，快来和我聊聊吧(*^▽^*)</div>
+        <Logo class="!w-[192px] !h-16" />
+        <div class="flex text-sm">
+          只需一个 URL, <strong>30秒</strong>掌握项目精髓, 快来和我聊聊吧(*^▽^*)
+        </div>
         <form
           @submit.prevent="handleSubmit"
           class="flex gap-2 mx-auto items-end"
