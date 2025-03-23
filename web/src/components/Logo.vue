@@ -12,8 +12,8 @@
         y="60%"
         dominant-baseline="middle"
         text-anchor="middle"
-        font-family="Fira Code, Monaco, Consolas, monospace"
-        font-weight="bold"
+        font-family="sans-serif, 'Fira Code', Monaco, Consolas, monospace"
+        font-weight="600"
         font-size="40"
         fill="url(#textGradient)"
       >

@@ -8,12 +8,18 @@
       >
         <Logo class="cursor-pointer" @click="currentChatId = ''" />
         <div class="p-3">
-          <button
+          <!-- <button
             @click="startNewChat"
             class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 text-white px-3 py-2 rounded-lg transition-all"
           >
             新建对话
-          </button>
+          </button> -->
+          <Button
+            class="w-full !border-none !bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 !text-white px-3 py-2 rounded-lg transition-all"
+            label="新建对话"
+            icon="pi pi-plus"
+            @click="currentChatId = ''"
+          />
         </div>
 
         <div class="flex-1 h-full overflow-y-auto">
@@ -25,7 +31,7 @@
               'group relative p-3 cursor-pointer transition-colors',
               currentChatId === chat.id
                 ? 'bg-gray-700 border-l-4 border-blue-500'
-                : 'hover:bg-gray-600',
+                : 'hover:bg-gray-600 rounded-2xl',
             ]"
           >
             <div v-if="!chat.titleEdit" class="text-gray-300 text-sm truncate">
@@ -82,6 +88,16 @@
             </div>
           </Popover>
         </div>
+        <!--设置-->
+        <div class="flex p-3">
+          <Button
+            class="w-full"
+            label="设置"
+            variant="text"
+            icon="pi pi-user"
+            @click="openSettingDialog"
+          />
+        </div>
       </div>
     </transition>
 
@@ -99,12 +115,13 @@
           @click="toggleSidebar"
           class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors"
         >
-          <Bars3Icon class="w-6 h-6" />
+          <i class="pi pi-list" />
         </button>
         <div class="flex-1 text-center text-lg font-medium text-gray-100">
           {{ currentChat?.title }}
         </div>
         <a
+          v-tooltip.bottom="'Star on GitHub'"
           target="_blank"
           href="https://github.com/fagao-ai/chatgit"
           class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors ml-2"
@@ -142,10 +159,12 @@
         ]"
         class="px-4 bg-gray-800 transition-all duration-500 gap-2"
       >
-        <Logo class="!w-[192px] !h-16" />
-        <div class="flex text-sm">
-          只需一个 URL, <strong>30秒</strong>掌握项目精髓, 快来和我聊聊吧(*^▽^*)
-        </div>
+        <template v-if="!currentChatHasMessage">
+          <Logo class="!w-[192px] !h-16" />
+          <div class="flex text-sm">
+            只需一个 URL, <strong>30秒</strong>掌握项目精髓, 快来和我聊聊吧(*^▽^*)
+          </div>
+        </template>
         <form
           @submit.prevent="handleSubmit"
           class="flex gap-2 mx-auto items-end"
@@ -184,28 +203,34 @@
     </div>
 
     <!-- 悬浮按钮 -->
-    <button
+    <Button
       @click="startNewChat"
-      class="fixed bottom-20 right-4 bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full shadow-xl hover:scale-105 transition-transform"
-    >
-      <PlusIcon class="w-6 h-6 text-white" />
-    </button>
+      class="!fixed !text-white !bottom-20 !right-4 !bg-gradient-to-r !border-none from-blue-500 to-purple-600 hover:scale-105 transition-transform"
+      icon="pi pi-plus"
+      severity="info"
+      rounded
+      aria-label="Add"
+      size="large"
+    />
     <ConfirmDialog group="positioned"></ConfirmDialog>
-    <Toast />
+    <DynamicDialog />
+    <Toast position="top-left" group="tl" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, defineAsyncComponent } from 'vue'
 import { OnClickOutside } from '@vueuse/components'
 import Popover from 'primevue/popover'
+import Button from 'primevue/button'
 import Toast from 'primevue/toast'
 import InputText from 'primevue/inputtext'
 import ConfirmDialog from 'primevue/confirmdialog'
+import DynamicDialog from 'primevue/dynamicdialog'
 import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
 import type { ConfirmationOptions } from 'primevue/confirmationoptions'
 import { useToast } from 'primevue/usetoast'
-import { Bars3Icon, PlusIcon } from '@heroicons/vue/24/outline'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Logo from '@/components/Logo.vue'
 import Spinner from '@/components/Spinner.vue'
@@ -215,6 +240,7 @@ import { AIConfig, chatHistory } from '@/states'
 
 const confirm = useConfirm()
 const toast = useToast()
+const dialog = useDialog()
 const isSidebarCollapsed = ref(false)
 const inputUrl = ref('')
 const isLoading = ref(false)
@@ -408,7 +434,13 @@ const confirmDeleteChat = (position: ConfirmationOptions['position'], chatId: st
       const findChatIndex = chatHistory.value.findIndex((c) => c.id === chatId)
       if (findChatIndex === -1) return
       chatHistory.value.splice(findChatIndex, 1)
-      toast.add({ severity: 'success', summary: 'Confirmed', detail: '删除成功', life: 3000 })
+      toast.add({
+        severity: 'success',
+        group: 'tl',
+        summary: 'Confirmed',
+        detail: '删除成功',
+        life: 3000,
+      })
     },
     reject: () => {},
   })
@@ -447,6 +479,22 @@ const toggle = (event: MouseEvent, chatId: string) => {
 const selectMember = (member: (typeof members.value)[number]) => {
   chatOperator.value?.hide()
   member.fn(chatOperatorId!)
+}
+// setting dialog
+const openSettingDialog = async () => {
+  dialog.open(
+    defineAsyncComponent(() => import('@/views/Settings.vue')),
+    {
+      props: {
+        header: '系统设置',
+        style: {
+          width: '800px',
+          '--p-dialog-header-padding': '20px 20px 0 20px',
+        },
+        modal: true,
+      },
+    },
+  )
 }
 </script>
 

@@ -32,4 +32,5 @@ export interface Config {
     apiKey: string
     baseUrl: string
     githubToken: string
+    model: string
 }

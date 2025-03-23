@@ -7,4 +7,5 @@ export const AIConfig = useLocalStorage<Config>('AIConfig', {
     apiKey: '',
     baseUrl: '',
     githubToken: '',
+    model: '',
 })
