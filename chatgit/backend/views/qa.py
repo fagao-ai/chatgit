@@ -14,7 +14,9 @@ router = APIRouter(prefix="/chat", tags=["qa"])
 @router.post("/git-repo", response_class=EventSourceResponse)
 async def chat_git_repo(schema: GithubRequest):
     stream = ChatService(
-        schema.model, api_key=schema.api_key, base_url=schema.base_url
+        api_key=schema.api_key,
+        base_url=schema.base_url,
+        model=schema.model,
     ).repo_chat(repo_url=schema.url.__str__(), github_token=schema.github_token)
     return EventSourceResponse(
         content=(item.model_dump_json() async for item in stream)
@@ -30,7 +32,9 @@ async def completions(schema: CompletionRequest):
     Please answer my question based on the conversation history and answer the question with Simplified Chinese.
     """.format(repo=repo, owner=onwer)
     stream = ChatService(
-        schema.model, api_key=schema.api_key, base_url=schema.base_url
+        api_key=schema.api_key,
+        base_url=schema.base_url,
+        model=schema.model,
     ).chat(schema.messages)
     return EventSourceResponse(
         content=(item.model_dump_json() async for item in stream)
@@ -42,6 +46,8 @@ async def generate_title(schema: CompletionRequest):
     repo, _ = Github.parse_github_url(schema.messages[0].content)
     return {
         "title": await ChatService(
-            schema.model, api_key=schema.api_key, base_url=schema.base_url
+            model=schema.model,
+            api_key=schema.api_key,
+            base_url=schema.base_url,
         ).get_title(repo, schema.messages),
     }

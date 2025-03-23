@@ -42,6 +42,11 @@ export const chatCompletions = async (params: QAParams) => {
 }
 
 export const getTitle = async (params: QAParams) => {
-    const res = await http.post<{ title?: string }>('/api/v1/chat/title', params)
-    return res.data
+    try {
+        const res = await http.post<{ title: string }>('/api/v1/chat/title', params)
+        return res.data
+    } catch (error) {
+        console.error(error)
+        return { title: '' }
+    }
 }

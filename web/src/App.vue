@@ -8,12 +8,6 @@
       >
         <Logo class="cursor-pointer" @click="currentChatId = ''" />
         <div class="p-3">
-          <!-- <button
-            @click="startNewChat"
-            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 text-white px-3 py-2 rounded-lg transition-all"
-          >
-            新建对话
-          </button> -->
           <Button
             class="w-full !border-none !bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 !text-white px-3 py-2 rounded-lg transition-all"
             label="新建对话"
@@ -232,7 +226,7 @@ import { useToast } from 'primevue/usetoast'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Logo from '@/components/Logo.vue'
 import { chatGithub, chatCompletions, getTitle } from '@/apis'
-import type { Chat } from '@/types'
+import type { Chat, Config } from '@/types'
 import { AIConfig, chatHistory } from '@/states'
 
 const confirm = useConfirm()
@@ -250,7 +244,7 @@ const currentChat = computed(() => {
 
 const currentChatHasMessage = computed(() => {
   const chat = chatHistory.value.find((c) => c.id === currentChatId.value)
-  return chat?.hasMessage || false
+  return chat?.hasMessage || isLoading.value || false
 })
 
 const messages = computed(() => {
@@ -296,17 +290,32 @@ function fakeStream(text: string, setFn: (char: string) => void, speed?: number)
   }, speed)
 }
 
-const handleSubmit = async () => {
-  // const config = unref(AIConfig)
-  // for (const key in config) {
-  //   if ((config as any)[key] === '') {
+const validateConfig = (obj: Config) => {
+  const { apiKey, baseUrl, model } = obj
 
-  //   }
-  // }
+  const isAnyNotEmpty = apiKey || baseUrl || model
+  const areAllNotEmpty = apiKey && baseUrl && model
+
+  if (isAnyNotEmpty && !areAllNotEmpty) {
+    return false // 当有一个不为空时，其他两个也必须不为空
+  }
+  return true // 全部为空或全部不为空
+}
+
+const handleSubmit = async () => {
+  const config = unref(AIConfig)
+  if (!validateConfig) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: '模型配置不完整,请检查',
+      life: 3000,
+    })
+    return
+  }
 
   if (!inputUrl.value || isLoading.value) return
   const inputValue = unref(inputUrl)
-  inputUrl.value = ''
 
   try {
     isLoading.value = true
@@ -324,23 +333,24 @@ const handleSubmit = async () => {
       { content: content, isUser: false, timestamp: new Date(), streaming: true },
     )
     const lastMessage = currentChat.value!.messages[currentChat.value!.messages.length - 1]
-
+    inputUrl.value = ''
     let stream
     if (currentChat.value!.hasMessage) {
       stream = await chatCompletions({
-        model: 'gpt-4o',
         messages: currentChat.value!.messages.map((m) => ({
           role: m.isUser ? 'user' : 'assistant',
           content: m.content,
         })),
+        ...config,
       })
     } else {
       stream = await chatGithub({
         url: inputValue,
-        model: 'gpt-4o',
+        ...config,
       })
     }
     if (!stream) {
+      lastMessage.content = '服务器出错了，请稍后再试'
       return
     }
     currentChat.value!.hasMessage = true
@@ -358,11 +368,11 @@ const handleSubmit = async () => {
 
     if (!currentChat.value!.title) {
       const res = await getTitle({
-        model: 'gpt-4o',
         messages: currentChat.value!.messages.map((m) => ({
           role: m.isUser ? 'user' : 'assistant',
           content: m.content,
         })),
+        ...config,
       })
       if (res.title) {
         fakeStream(res.title, (char) => {

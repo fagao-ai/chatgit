@@ -84,8 +84,8 @@ class ChatService:
 
     def __init__(
         self,
-        model: str,
         *,
+        model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
@@ -94,6 +94,8 @@ class ChatService:
             api_key = os.environ.get("OPENAI_API_KEY")
         if base_url is None:
             base_url = os.environ.get("OPENAI_API_BASE")
+        if model is None:
+            model = os.environ.get("OPENAI_MODEL")
         self.client = AsyncOpenAI(
             api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3
         )

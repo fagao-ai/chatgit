@@ -1,8 +1,8 @@
 interface BaseParams {
-    model: string,
-    apiKey?: string
-    baseUrl?: string
-    githubToken?: string
+    model?: string | null
+    apiKey?: string | null
+    baseUrl?: string | null
+    githubToken?: string | null
 }
 export interface ChatGithubParams extends BaseParams {
     url: string,
@@ -29,8 +29,8 @@ export interface Message {
 }
 
 export interface Config {
-    apiKey: string
-    baseUrl: string
-    githubToken: string
-    model: string
+    apiKey: string | null
+    baseUrl: string | null
+    githubToken: string | null
+    model: string | null
 }
