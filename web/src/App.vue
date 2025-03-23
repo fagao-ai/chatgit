@@ -172,6 +172,7 @@
         >
           <textarea
             v-auto-resize
+            :disabled="isLoading"
             v-model="inputUrl"
             :placeholder="currentChat?.hasMessage ? '请输入问题...' : '请输入GitHub项目URL...'"
             rows="1"
@@ -216,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch, defineAsyncComponent } from 'vue'
+import { ref, computed, nextTick, watch, defineAsyncComponent, unref } from 'vue'
 import { OnClickOutside } from '@vueuse/components'
 import Popover from 'primevue/popover'
 import Button from 'primevue/button'
@@ -230,7 +231,6 @@ import type { ConfirmationOptions } from 'primevue/confirmationoptions'
 import { useToast } from 'primevue/usetoast'
 import StreamingMarkdown from '@/components/StreamingMarkdown.vue'
 import Logo from '@/components/Logo.vue'
-import Spinner from '@/components/Spinner.vue'
 import { chatGithub, chatCompletions, getTitle } from '@/apis'
 import type { Chat } from '@/types'
 import { AIConfig, chatHistory } from '@/states'
@@ -305,6 +305,8 @@ const handleSubmit = async () => {
   // }
 
   if (!inputUrl.value || isLoading.value) return
+  const inputValue = unref(inputUrl)
+  inputUrl.value = ''
 
   try {
     isLoading.value = true
@@ -318,7 +320,7 @@ const handleSubmit = async () => {
     }
 
     currentChat.value!.messages.push(
-      { content: inputUrl.value, isUser: true, timestamp: new Date() },
+      { content: inputValue, isUser: true, timestamp: new Date() },
       { content: content, isUser: false, timestamp: new Date(), streaming: true },
     )
     const lastMessage = currentChat.value!.messages[currentChat.value!.messages.length - 1]
@@ -334,13 +336,14 @@ const handleSubmit = async () => {
       })
     } else {
       stream = await chatGithub({
-        url: inputUrl.value,
+        url: inputValue,
         model: 'gpt-4o',
       })
     }
     if (!stream) {
       return
     }
+    currentChat.value!.hasMessage = true
     for await (let event of stream) {
       try {
         const msg = JSON.parse(event.data ?? '')
@@ -351,7 +354,6 @@ const handleSubmit = async () => {
         }
       } catch (e) {}
     }
-    currentChat.value!.hasMessage = true
     lastMessage.streaming = false
 
     if (!currentChat.value!.title) {
@@ -368,7 +370,6 @@ const handleSubmit = async () => {
         })
       }
     }
-    inputUrl.value = ''
   } finally {
     isLoading.value = false
   }
