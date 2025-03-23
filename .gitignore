@@ -194,3 +194,4 @@ coverage
 
 *.tsbuildinfo
 tmp/
+.ruff_cache

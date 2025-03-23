@@ -244,7 +244,7 @@ const currentChat = computed(() => {
 
 const currentChatHasMessage = computed(() => {
   const chat = chatHistory.value.find((c) => c.id === currentChatId.value)
-  return chat?.hasMessage || isLoading.value || false
+  return chat?.hasMessage || chat?.messages.length || isLoading.value || false
 })
 
 const messages = computed(() => {
@@ -351,6 +351,7 @@ const handleSubmit = async () => {
     }
     if (!stream) {
       lastMessage.content = '服务器出错了，请稍后再试'
+      lastMessage.streaming = false
       return
     }
     currentChat.value!.hasMessage = true
@@ -365,6 +366,13 @@ const handleSubmit = async () => {
       } catch (e) {}
     }
     lastMessage.streaming = false
+    if (!lastMessage.content) {
+      lastMessage.content = '服务器出错了，请稍后再试'
+      if (currentChat.value!.messages.length === 2) {
+        currentChat.value!.hasMessage = false
+      }
+      return
+    }
 
     if (!currentChat.value!.title) {
       const res = await getTitle({
