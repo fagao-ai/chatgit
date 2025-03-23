@@ -1,0 +1,1 @@
+exec uv run supervisord -n -c /etc/supervisor/supervisord.conf
