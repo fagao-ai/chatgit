@@ -44,7 +44,7 @@ import os
 #     Config.Config.env_file = CONFIG_DIR / "config.prod.toml"
 
 # config = Config()
-DB_ENABLE = os.getenv("CHATGIT_DB_ENABLE", "False")
+DB_ENABLE = os.getenv("CHATGIT_DB_ENABLE", False)
 DB_USERNAME = os.getenv("CHATGIT_DB_USERNAME", "postgres")
 DB_PASSWORD = os.getenv("CHATGIT_DB_PASSWORD", "")
 DB_HOST = os.getenv("CHATGIT_DB_HOST", "localhost")
