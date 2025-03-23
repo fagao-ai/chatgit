@@ -24,7 +24,9 @@ class Repository(BaseModel):
     repo_id: int = ormar.Integer()
     name: str = ormar.String(max_length=200)
     full_name: str = ormar.String(max_length=200)
-    organization: Organization | None = ormar.ForeignKey(Organization, nullable=True)
+    organization: Organization | None = ormar.ForeignKey(
+        Organization, name="organization_id", nullable=True
+    )
     # index_url: str = ormar.String(max_length=200)
     # api_url: str = ormar.String(max_length=200)
     homepage: str | None = ormar.String(max_length=200, nullable=True)
@@ -50,7 +52,7 @@ class Repository(BaseModel):
     ) -> Self:
         if org := repo_info.get("organization"):
             org, _ = await Organization.objects.get_or_create(
-                org_id=org["id"], _defaults={"name": org["login"]}
+                org_id=org["id"], _defaults={"name": org["login"], "meta": org}
             )
 
         repo, created = await cls.objects.get_or_create(
@@ -84,7 +86,7 @@ class Repository(BaseModel):
 class Topic(BaseModel):
     ormar_config = base_ormar_config.copy(tablename="topic")  # type: ignore
 
-    repo: Repository | None = ormar.ForeignKey(Repository)
+    repo: Repository = ormar.ForeignKey(Repository, name="repo_id")
     name: str = ormar.String(max_length=200, nullable=False)
 
 

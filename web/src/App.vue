@@ -94,7 +94,7 @@
             class="w-full"
             label="设置"
             variant="text"
-            icon="pi pi-user"
+            icon="pi pi-cog"
             @click="openSettingDialog"
           />
         </div>
@@ -167,7 +167,7 @@
         </template>
         <form
           @submit.prevent="handleSubmit"
-          class="flex gap-2 mx-auto items-end"
+          class="flex gap-2 mx-auto items-center"
           :class="!currentChatHasMessage ? 'max-w-2xl w-full' : 'max-w-4xl w-full'"
         >
           <textarea
@@ -176,28 +176,25 @@
             :placeholder="currentChat?.hasMessage ? '请输入问题...' : '请输入GitHub项目URL...'"
             rows="1"
             class="flex-1 pl-4 pr-4 py-3 bg-gray-900 text-gray-100 rounded-xl border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none min-h-[48px] max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600"
+            @keyup.enter.prevent="handleSubmit"
           />
-          <button
+          <Button
+            class="!h-12 !w-12 !text-white !rounded-xl !border-none flex-shrink-0 !bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            :loading="isLoading"
             type="submit"
-            :disabled="isLoading"
-            class="h-[48px] w-[48px] mb-0.5 flex-shrink-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center"
+            loading-icon="pi pi-spin pi-spinner"
           >
-            <svg
-              v-if="!isLoading"
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-            <Spinner v-else class="w-5 h-5" />
-          </button>
+            <template #icon>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </template>
+          </Button>
         </form>
       </div>
     </div>
