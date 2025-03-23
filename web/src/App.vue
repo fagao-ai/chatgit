@@ -139,7 +139,7 @@
                 'max-w-2xl p-4 rounded-2xl',
                 message.isUser
                   ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-100',
+                  : 'bg-gray-700 text-gray-100',
               ]"
             >
               <!-- 修改为实时渲染模式 -->
