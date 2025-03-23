@@ -19,7 +19,6 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import Spinner from '@/components/Spinner.vue'
 import DOMPurify from 'dompurify'
-import { useDebounceFn } from '@vueuse/core'
 import { ref, watch, computed, nextTick, onMounted } from 'vue'
 import 'highlight.js/styles/atom-one-dark.css'
 

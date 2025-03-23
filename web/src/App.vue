@@ -28,7 +28,11 @@
                 : 'hover:bg-gray-600 rounded-2xl',
             ]"
           >
-            <div v-if="!chat.titleEdit" class="text-gray-300 text-sm truncate">
+            <div
+              v-if="!chat.titleEdit"
+              v-tooltip.top="chat.title"
+              class="text-gray-300 text-sm truncate"
+            >
               {{ chat.title || '新对话' }}
             </div>
             <template v-else>
