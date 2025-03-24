@@ -43,7 +43,7 @@ async def completions(schema: CompletionRequest):
 
 @router.post("/title")
 async def generate_title(schema: CompletionRequest):
-    repo, _ = Github.parse_github_url(schema.messages[0].content)
+    _, repo = Github.parse_github_url(schema.messages[0].content)
     return {
         "title": await ChatService(
             model=schema.model,
