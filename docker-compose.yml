@@ -1,0 +1,32 @@
+services:
+  web:
+    container_name: chatgit_server
+    restart: on-failure
+    image: chatgit:0.0.1
+    ports:
+      - "18888:80"
+    networks:
+      - chatgit_network
+    environment:
+      - CHATGIT_DB_ENABLE=
+  #     - CHATGIT_DB_USERNAME=postgres
+  #     - CHATGIT_DB_PASSWORD=postgres
+  #     - CHATGIT_DB_HOST=chatgit_db
+  #     - CHATGIT_DB_PORT=5432
+  #     - CHATGIT_DB_NAME=chatgit
+  #   depends_on:
+  #     - postgres
+
+  # postgres:
+  #   container_name: chatgit_db
+  #   image: postgres:17-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - chatgit_network
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: chatgit
+networks:
+  chatgit_network:
