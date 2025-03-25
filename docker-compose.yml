@@ -22,6 +22,8 @@ services:
   #   image: postgres:17-alpine
   #   ports:
   #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
   #   networks:
   #     - chatgit_network
   #   environment:
