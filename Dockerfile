@@ -35,7 +35,8 @@ RUN sed -i s@/deb.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list.d/deb
     && pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple \
     && pip install uv \
     && uv venv \
-    && uv sync
+    && uv sync \
+    && uv run inv db.migrate
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
