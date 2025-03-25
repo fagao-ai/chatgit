@@ -93,7 +93,7 @@ class ChatService:
         if api_key is None:
             api_key = os.environ.get("OPENAI_API_KEY")
         if base_url is None:
-            base_url = os.environ.get("OPENAI_API_BASE")
+            base_url = os.environ.get("OPENAI_BASE_URL")
         if model is None:
             model = os.environ.get("OPENAI_MODEL")
         self.client = AsyncOpenAI(
@@ -106,6 +106,8 @@ class ChatService:
             model=self.model, messages=messages, stream=True
         )
         async for chunk in response:
+            if not chunk.choices:
+                continue
             if hasattr(chunk.choices[0].delta, "reasoning_content"):  # type: ignore
                 yield ChatMessageChunk(
                     reasoning_content=chunk.choices[0].delta.reasoning_content
