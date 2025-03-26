@@ -47,3 +47,11 @@ uv sync
 cp .env.example .env
 # 编辑.env文件填入您的API密钥
 ```
+
+### Docker 部署
+
+```bash
+docker build -t chatgit:0.0.1 .
+
+docker run -d -p 80:80 chatgit:0.0.1
+```
