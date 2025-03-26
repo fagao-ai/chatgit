@@ -1,4 +1,4 @@
-# ChatGit 🤖📚
+# ChatGit 🤖📚 ([在线体验/Online Demo](https://chatgit.batariya.top/))
 
 **让 AI 帮你秒懂 开源 项目！** 只需一个 URL，30 秒掌握项目精髓，技术拆解+价值评估+实操指引全搞定！
 
