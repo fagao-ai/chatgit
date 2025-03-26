@@ -347,18 +347,19 @@ const handleSubmit = async () => {
     const lastMessage = currentChat.value!.messages[currentChat.value!.messages.length - 1]
     inputUrl.value = ''
     let stream
+    const qaConfig = { apiKey: config.apiKey, baseUrl: config.baseUrl, model: config.model }
     if (currentChat.value!.hasMessage) {
       stream = await chatCompletions({
         messages: currentChat.value!.messages.map((m) => ({
           role: m.isUser ? 'user' : 'assistant',
           content: m.content,
         })),
-        ...config,
+        ...qaConfig,
       })
     } else {
       stream = await chatGithub({
         url: inputValue,
-        ...config,
+        ...qaConfig,
       })
     }
     if (!stream) {
@@ -404,12 +405,23 @@ const handleSubmit = async () => {
     }
 
     if (!currentChat.value!.title) {
+      const titleConfig = config.followSystem
+        ? {
+            apiKey: config.apiKey,
+            baseUrl: config.baseUrl,
+            model: config.model,
+          }
+        : {
+            apiKey: config.titleApiKey,
+            baseUrl: config.titleBaseUrl,
+            model: config.titleModel,
+          }
       const res = await getTitle({
         messages: currentChat.value!.messages.map((m) => ({
           role: m.isUser ? 'user' : 'assistant',
           content: m.content,
         })),
-        ...config,
+        ...titleConfig,
       })
       if (res.title) {
         fakeStream(res.title, (char) => {

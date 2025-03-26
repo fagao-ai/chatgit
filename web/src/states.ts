@@ -8,4 +8,8 @@ export const AIConfig = useLocalStorage<Config>('AIConfig', {
     baseUrl: null,
     githubToken: null,
     model: null,
+    followSystem: true,
+    titleApiKey: null,
+    titleBaseUrl: null,
+    titleModel: null
 })

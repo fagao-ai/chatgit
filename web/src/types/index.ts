@@ -35,4 +35,8 @@ export interface Config {
     baseUrl: string | null
     githubToken: string | null
     model: string | null
+    followSystem: boolean
+    titleApiKey: string | null
+    titleBaseUrl: string | null
+    titleModel: string | null
 }
