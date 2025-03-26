@@ -1,6 +1,6 @@
 # ChatGit 🤖📚
 
-**让 AI 帮你秒懂 GitHub 项目！** 只需一个 URL，30 秒掌握项目精髓，技术拆解+价值评估+实操指引全搞定！
+**让 AI 帮你秒懂 开源 项目！** 只需一个 URL，30 秒掌握项目精髓，技术拆解+价值评估+实操指引全搞定！
 
 [![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/yourusername/chatgit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,6 +9,7 @@
 
 ## 🌟 项目亮点
 
+- 🤖 **内置 Deepseek-R1** - 兼容 OpenAI 系列模型
 - 🚀 **30 秒极速解析** - 自动抓取 README+代码分析
 - 🔍 **五维深度解读** - 技术/价值/实操/追问建议全覆盖
 - 🔑 **双 Token 支持** - 兼容 OpenAI API+GitHub 私有仓库
@@ -27,7 +28,9 @@
 
 ### 前置要求
 
-- Python 3.8+
+- Python 3.12+
+- Node 20+
+- Pnpm 10
 - OpenAI API Key
 - GitHub Personal Token（可选）
 
@@ -35,12 +38,12 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourusername/chatgit.git
+git clone https://github.com/fagao-ai/chatgit.git
 
 # 2. 安装依赖
-pip install -r requirements.txt
+uv sync
 
-# 3. 配置环境
+# 3. 配置环境(可选,web页面也可配置)
 cp .env.example .env
 # 编辑.env文件填入您的API密钥
 ```
