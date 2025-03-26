@@ -23,6 +23,8 @@ export interface Chat {
 
 export interface Message {
     content: string
+    reasoningContent?: string
+    reasoningTime?: number
     isUser: boolean
     timestamp: Date
     streaming?: boolean

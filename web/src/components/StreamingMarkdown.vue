@@ -1,16 +1,30 @@
 <template>
   <div class="markdown-stream">
-    <div v-if="streaming && !renderedContent" class="flex items-center text-gray-400">
+    <!-- <div v-if="streaming && !renderedContent" class="flex items-center text-gray-400">
       <Spinner size="sm" class="mr-2" />
       Analyzing...
+    </div> -->
+    <div v-if="reasoningContent" class="reasoning-container">
+      <div class="thinking-header">
+        <Spinner v-if="streaming" size="sm" class="mr-2" />
+        <div class="status-indicator">
+          <span class="status-text">{{ streaming ? '思考中' : '思考完成' }}</span>
+          <span class="timer">{{ formattedTime }}</span>
+        </div>
+      </div>
+      <div class="reasoning-content">
+        <pre>{{ processedReasoning }}</pre>
+      </div>
     </div>
-    <div
-      ref="markdownContent"
-      class="markdown-body"
-      v-html="processedContent"
-      @click="handleCopy"
-    ></div>
-    <div v-if="streaming" class="blinking-caret"></div>
+    <div class="answer-container" :class="{ 'with-reasoning': reasoningContent }">
+      <div
+        ref="markdownContent"
+        class="markdown-body"
+        v-html="processedContent"
+        @click="handleCopy"
+      ></div>
+      <div v-if="streaming" class="blinking-caret"></div>
+    </div>
   </div>
 </template>
 
@@ -30,8 +44,28 @@ declare module 'marked' {
 
 const props = defineProps<{
   content: string
+  reasoningContent?: string
   streaming?: boolean
+  reasoningTime?: number
 }>()
+
+const formattedTime = computed(() => {
+  if (!props.reasoningTime) return ''
+  const sec = Math.floor(props.reasoningTime / 1000)
+  return `${Math.floor(sec / 60)}m ${sec % 60}s`.replace(/^0m /, '')
+})
+
+const processedReasoning = ref('')
+
+watch(
+  () => props.reasoningContent,
+  (newVal) => {
+    if (newVal) {
+      processedReasoning.value = newVal
+    }
+  },
+  { immediate: true },
+)
 
 // 配置marked渲染器
 const renderer = new marked.Renderer()
@@ -187,7 +221,7 @@ const renderedContent = computed(() => processedContent.value.length > 0)
 }
 
 .blinking-caret {
-  @apply inline-block w-1 h-5 bg-gray-400;
+  @apply inline-block w-[2px] h-5 bg-gray-400 ml-1;
   animation: blink 1s step-end infinite;
 }
 
@@ -266,6 +300,50 @@ const renderedContent = computed(() => processedContent.value.length > 0)
     transform: translateY(2px);
   }
 
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reasoning-container {
+  @apply mb-4 p-4 border-l-4 border-purple-400 bg-gradient-to-r from-purple-900/20 to-transparent rounded-lg;
+}
+
+.thinking-header {
+  @apply flex items-center mb-3 text-sm;
+}
+
+.status-indicator {
+  @apply flex items-center gap-2;
+}
+
+.status-text {
+  @apply text-purple-300 font-medium;
+}
+
+.timer {
+  @apply text-gray-400 text-xs font-mono;
+}
+
+.reasoning-content pre {
+  @apply text-gray-300 font-mono text-sm leading-6 whitespace-pre-wrap break-words;
+}
+
+.answer-container {
+  @apply relative;
+  animation: slideUp 0.3s ease;
+}
+
+.answer-container.with-reasoning {
+  @apply border-t border-gray-700 pt-4;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);

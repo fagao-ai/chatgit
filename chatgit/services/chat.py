@@ -88,7 +88,7 @@ class ChatService:
         model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
-        timeout: int = 60,
+        timeout: int = 600,
     ):
         if api_key is None:
             api_key = os.environ.get("OPENAI_API_KEY")
@@ -134,7 +134,7 @@ class ChatService:
 3. 禁用总结/分析等附加内容  
 4. 输出仅保留最终标题  
 5. 使用给定对话历史的语言
-6. 结合项目名称: {repo}!!!
+6. 结合项目名称: {repo}
 
 如: 项目名称为ruff
 标题: ruff: ⚡️超快代码检查

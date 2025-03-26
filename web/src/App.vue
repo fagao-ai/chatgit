@@ -143,7 +143,12 @@
               ]"
             >
               <!-- 修改为实时渲染模式 -->
-              <StreamingMarkdown :content="message.content" :streaming="message.streaming" />
+              <StreamingMarkdown
+                :content="message.content"
+                :reasoning-content="message.reasoningContent"
+                :streaming="message.streaming"
+                :reasoning-time="elapsedTime"
+              />
             </div>
           </div>
         </div>
@@ -232,7 +237,9 @@ import Logo from '@/components/Logo.vue'
 import { chatGithub, chatCompletions, getTitle } from '@/apis'
 import type { Chat, Config } from '@/types'
 import { AIConfig, chatHistory } from '@/states'
+import { useTimer } from '@/composables/useTimer'
 
+const { elapsedTime, startTimer, stopTimer } = useTimer()
 const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
@@ -325,6 +332,7 @@ const handleSubmit = async () => {
     isLoading.value = true
 
     let content = ''
+    let reasoningContent = ''
     if (
       !chatHistory.value.length ||
       chatHistory.value.find((c) => c.id === currentChatId.value) === void 0
@@ -362,12 +370,29 @@ const handleSubmit = async () => {
     for await (let event of stream) {
       try {
         const msg = JSON.parse(event.data ?? '')
+        if (msg.reasoning_content) {
+          if (!reasoningContent) {
+            startTimer()
+          }
+          reasoningContent += msg.reasoning_content
+          lastMessage.reasoningContent = reasoningContent
+          lastMessage.streaming = true
+        }
         if (msg.content) {
           content += msg.content
           lastMessage.content = content
           lastMessage.streaming = true
         }
-      } catch (e) {}
+      } catch (e) {
+        stopTimer()
+        if (elapsedTime.value > 0) {
+          lastMessage.reasoningTime = elapsedTime.value
+        }
+      }
+    }
+    stopTimer()
+    if (elapsedTime.value > 0) {
+      lastMessage.reasoningTime = elapsedTime.value
     }
     lastMessage.streaming = false
     if (!lastMessage.content) {

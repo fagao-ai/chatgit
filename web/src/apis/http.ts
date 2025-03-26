@@ -4,7 +4,7 @@ import snakecaseKeys from "snakecase-keys"
 
 const instance = axios.create({
     baseURL: '/',
-    timeout: 60000,
+    timeout: 600000,
     adapter: 'fetch',
     // other configurations...
 });
