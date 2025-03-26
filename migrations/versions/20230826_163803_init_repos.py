@@ -38,7 +38,7 @@ def upgrade() -> None:
         sa.Column("readme_content", LONGTEXT, nullable=True),
         # sa.Column("readme_name", sa.String(200), nullable=True),
         sa.Column("repo_source", sa.String()),
-        sa.Column("organization", sa.Integer, nullable=True),
+        sa.Column("organization_id", sa.Integer, nullable=True),
         sa.Column("created_at", sa.DateTime),
         sa.Column("updated_at", sa.DateTime),
     )
@@ -46,7 +46,7 @@ def upgrade() -> None:
     op.create_table(
         "topic",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("repo", sa.Integer, nullable=False, index=True),
+        sa.Column("repo_id", sa.Integer, nullable=False, index=True),
         sa.Column("name", sa.String(), nullable=False, index=True),
         sa.Column("created_at", sa.DateTime),
         sa.Column("updated_at", sa.DateTime),
