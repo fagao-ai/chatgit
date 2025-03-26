@@ -88,6 +88,9 @@ class ChatService:
         model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        title_model: str | None = None,
+        title_api_key: str | None = None,
+        title_base_url: str | None = None,
         timeout: int = 600,
     ):
         if api_key is None:
@@ -96,10 +99,23 @@ class ChatService:
             base_url = os.environ.get("OPENAI_BASE_URL")
         if model is None:
             model = os.environ.get("OPENAI_MODEL")
+        if title_api_key is None:
+            title_api_key = os.environ.get("OPENAI_TITLE_API_KEY", api_key)
+        if title_base_url is None:
+            title_base_url = os.environ.get("OPENAI_TITLE_BASE_URL", base_url)
+        if title_model is None:
+            title_model = os.environ.get("OPENAI_TITLE_MODEL", model)
         self.client = AsyncOpenAI(
             api_key=api_key, base_url=base_url, timeout=timeout, max_retries=3
         )
+        self.title_client = AsyncOpenAI(
+            api_key=title_api_key,
+            base_url=title_base_url,
+            timeout=timeout,
+            max_retries=3,
+        )
         self.model = model
+        self.title_model = title_model
 
     async def chat(self, messages: list[ChatCompletionUserMessageParam]):
         response = await self.client.chat.completions.create(
@@ -147,8 +163,8 @@ class ChatService:
         ].content = (
             f"请基于该项目的readme介绍一下该项目的优势, 仓库地址: {messages[0].content}"
         )
-        response = await self.client.chat.completions.create(
-            model=self.model,
+        response = await self.title_client.chat.completions.create(
+            model=self.title_model,
             messages=[
                 {
                     "role": "user",
